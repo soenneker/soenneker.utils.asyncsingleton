@@ -22,7 +22,9 @@ public class HttpRequester : IDisposable, IAsyncDisposable
 
     public HttpRequester()
     {
-        // this func will lazily be called once it's retrieved the first time
+        // This func will lazily execute once it's retrieved the first time.
+        // Other threads calling this at the same moment will asynchronously wait,
+        // and then utilize the HttpClient that was created from the first caller.
         _client = new AsyncSingleton<HttpClient>(() =>
         {
             var socketsHandler = new SocketsHttpHandler
@@ -38,7 +40,7 @@ public class HttpRequester : IDisposable, IAsyncDisposable
     public async ValueTask Get()
     {
         // retrieve the singleton async, thus not blocking the calling thread
-        (await _client.Get()).GetAsync("https://google.com");
+        await (await _client.Get()).GetAsync("https://google.com");
     }
 
     public ValueTask DisposeAsync()
@@ -55,5 +57,4 @@ public class HttpRequester : IDisposable, IAsyncDisposable
         _client.Dispose();
     }
 }
-
 ```
