@@ -43,6 +43,7 @@ public class HttpRequester : IDisposable, IAsyncDisposable
         await (await _client.Get()).GetAsync("https://google.com");
     }
 
+    // Disposal is not necessary for AsyncSingleton unless the type used is IDisposable/IAsyncDisposable
     public ValueTask DisposeAsync()
     {
         GC.SuppressFinalize(false);
