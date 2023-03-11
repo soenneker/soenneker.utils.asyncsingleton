@@ -11,7 +11,8 @@ namespace Soenneker.Utils.AsyncSingleton.Abstract;
 public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
 {
     /// <summary>
-    /// This method should be called even if the initialization func was synchronous
+    /// Utilizes double-check async locking to guarantee there's only one instance of the object. It's lazy; it's initialized only when retrieving.
+    /// This method should be called even if the initialization func was synchronous.
     /// </summary>
     /// <remarks>The initialization func needs to be set before calling this, either in the ctor or via the other methods</remarks>
     /// <exception cref="ObjectDisposedException"></exception>
@@ -20,7 +21,7 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
     ValueTask<T> Get();
 
     /// <summary>
-    /// <see cref="Get"/> should be used instead of this if possible. This method can block the calling thread
+    /// <see cref="Get"/> should be used instead of this if possible. This method can block the calling thread! It's lazy; it's initialized only when retrieving.
     /// </summary>
     /// <remarks>The initialization func needs to be set before calling this, either in the ctor or via the other methods</remarks>
     /// <exception cref="ObjectDisposedException"></exception>
@@ -37,4 +38,18 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
     /// Allows for setting the initialization code outside of the constructor
     /// </summary>
     void SetInitialization(Func<T> initializationFunc);
+
+    /// <summary>
+    /// If the instance is an IDisposable, Dispose will be called on the method (and DisposeAsync will not) <para/>
+    /// If the instance is ONLY an IAsyncDisposable, it will try to dispose of the object (without blocking). You should try to avoid this. <para/>
+    /// <inheritdoc cref="IDisposable.Dispose"/>
+    /// </summary>
+    new void Dispose();
+
+    /// <summary>
+    /// This is the preferred method of disposal. This will asynchronously dispose of the instance if the object is an IAsyncDisposable <para/>
+    /// There shouldn't be a need to call ConfigureAwait(false) on this. <para/>
+    /// <inheritdoc cref="IAsyncDisposable.DisposeAsync"/>
+    /// </summary>
+    new ValueTask DisposeAsync();
 }

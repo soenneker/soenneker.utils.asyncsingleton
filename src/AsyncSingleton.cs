@@ -17,16 +17,20 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
     private bool _disposed;
 
-    public AsyncSingleton(Func<Task<T>>? asyncInitializationFunc = null) : this()
+    public AsyncSingleton(Func<Task<T>> asyncInitializationFunc) : this()
     {
         _asyncInitializationFunc = asyncInitializationFunc;
     }
 
-    public AsyncSingleton(Func<T>? initializationFunc = null) : this()
+    public AsyncSingleton(Func<T> initializationFunc) : this()
     {
         _initializationFunc = initializationFunc;
     }
 
+    // ReSharper disable once MemberCanBePrivate.Global
+    /// <summary>
+    /// If this is used, be sure to set the initialization func, see <see cref="SetAsyncInitialization"/> or <see cref="SetInitialization"/> or use another constructor.
+    /// </summary>
     public AsyncSingleton()
     {
         _lock = new AsyncLock();
@@ -81,7 +85,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
                 throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
 
             T tempInstance = _initializationFunc();
-            
+
             _instance = tempInstance;
         }
 
@@ -112,9 +116,9 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
             case IDisposable disposable:
                 disposable.Dispose();
                 break;
-            case IAsyncDisposable asyncDisposable: 
-                // Kind of a weird situation - basically the instance is IAsyncDisposable but it's being disposed non asynchronously.
-                // Hopefully this object is IDisposable because this is not guaranteed to block
+            case IAsyncDisposable asyncDisposable:
+                // Kind of a weird situation - basically the instance is IAsyncDisposable but it's being disposed synchronously (which can happen).
+                // Hopefully this object is IDisposable because this is not guaranteed to block, but we'll try anyways
                 asyncDisposable.DisposeAsync().ConfigureAwait(false);
                 break;
         }

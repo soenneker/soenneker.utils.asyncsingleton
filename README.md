@@ -10,3 +10,50 @@
 ```
 Install-Package Soenneker.Utils.AsyncSingleton
 ```
+
+## Example
+
+The example below is a long-living `HttpClient` implementation using `AsyncSingleton`. It avoids the additional overhead of `IHttpClientFactory`, and doesn't rely on short-lived clients.
+
+```csharp
+public class HttpRequester : IDisposable, IAsyncDisposable
+{
+    private readonly AsyncSingleton<HttpClient> _client;
+
+    public HttpRequester()
+    {
+        // this func will lazily be called once it's retrieved the first time
+        _client = new AsyncSingleton<HttpClient>(() =>
+        {
+            var socketsHandler = new SocketsHttpHandler
+            {
+                PooledConnectionLifetime = TimeSpan.FromMinutes(10),
+                MaxConnectionsPerServer = 10
+            };
+
+            return new HttpClient(socketsHandler);
+        });
+    }
+
+    public async ValueTask Get()
+    {
+        // retrieve the singleton async, thus not blocking the calling thread
+        (await _client.Get()).GetAsync("https://google.com");
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(false);
+
+        return _client.DisposeAsync();
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(false);
+        
+        _client.Dispose();
+    }
+}
+
+```

@@ -1,6 +1,5 @@
 ﻿using FluentAssertions;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Soenneker.Utils.AsyncSingleton.Tests;
 
@@ -18,7 +17,7 @@ public class AsyncSingletonTests
     public async Task Get_in_parallel_should_return_both_instances()
     {
         var httpClientSingleton = new AsyncSingleton<HttpClient>(() => new HttpClient());
-
+        
         HttpClient? client1 = null;
         HttpClient? client2 = null;
 
