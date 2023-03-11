@@ -42,14 +42,14 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
     /// <summary>
     /// If the instance is an IDisposable, Dispose will be called on the method (and DisposeAsync will not) <para/>
     /// If the instance is ONLY an IAsyncDisposable, it will try to dispose of the object (without blocking). You should try to avoid this. <para/>
-    /// <inheritdoc cref="IDisposable.Dispose"/>
     /// </summary>
+    /// <remarks>Disposal is not necessary unless the object's type is IDisposable/IAsyncDisposable</remarks>
     new void Dispose();
 
     /// <summary>
     /// This is the preferred method of disposal. This will asynchronously dispose of the instance if the object is an IAsyncDisposable <para/>
     /// There shouldn't be a need to call ConfigureAwait(false) on this. <para/>
-    /// <inheritdoc cref="IAsyncDisposable.DisposeAsync"/>
     /// </summary>
+    /// <remarks>Disposal is not necessary unless the object's type is IDisposable/IAsyncDisposable</remarks>
     new ValueTask DisposeAsync();
 }
