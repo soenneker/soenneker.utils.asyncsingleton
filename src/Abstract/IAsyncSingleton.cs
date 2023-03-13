@@ -22,6 +22,7 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
 
     /// <summary>
     /// <see cref="Get"/> should be used instead of this if possible. This method can block the calling thread! It's lazy; it's initialized only when retrieving.
+    /// This can still be used with an async initialization func, but it will block on the func.
     /// </summary>
     /// <remarks>The initialization func needs to be set before calling this, either in the ctor or via the other methods</remarks>
     /// <exception cref="ObjectDisposedException"></exception>
@@ -41,7 +42,7 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
 
     /// <summary>
     /// If the instance is an IDisposable, Dispose will be called on the method (and DisposeAsync will not) <para/>
-    /// If the instance is ONLY an IAsyncDisposable, it will try to dispose of the object (without blocking). You should try to avoid this. <para/>
+    /// If the instance is ONLY an IAsyncDisposable and this is called, it will block while disposing. You should try to avoid this. <para/>
     /// </summary>
     /// <remarks>Disposal is not necessary unless the object's type is IDisposable/IAsyncDisposable</remarks>
     new void Dispose();

@@ -81,10 +81,19 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
             if (_instance != null)
                 return _instance;
 
-            if (_initializationFunc == null)
-                throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
+            T tempInstance;
 
-            T tempInstance = _initializationFunc();
+            if (_initializationFunc != null)
+            {
+                tempInstance = _initializationFunc();
+            }
+            else if (_asyncInitializationFunc != null)
+            {
+                // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
+                tempInstance = _asyncInitializationFunc().GetAwaiter().GetResult();
+            }
+            else 
+                throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
 
             _instance = tempInstance;
         }
@@ -118,8 +127,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
                 break;
             case IAsyncDisposable asyncDisposable:
                 // Kind of a weird situation - basically the instance is IAsyncDisposable but it's being disposed synchronously (which can happen).
-                // Hopefully this object is IDisposable because this is not guaranteed to block, but we'll try anyways
-                asyncDisposable.DisposeAsync().ConfigureAwait(false);
+                asyncDisposable.DisposeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
                 break;
         }
 

@@ -46,14 +46,14 @@ public class HttpRequester : IDisposable, IAsyncDisposable
     // Disposal is not necessary for AsyncSingleton unless the type used is IDisposable/IAsyncDisposable
     public ValueTask DisposeAsync()
     {
-        GC.SuppressFinalize(false);
+        GC.SuppressFinalize(this);
 
         return _client.DisposeAsync();
     }
 
     public void Dispose()
     {
-        GC.SuppressFinalize(false);
+        GC.SuppressFinalize(this);
         
         _client.Dispose();
     }
