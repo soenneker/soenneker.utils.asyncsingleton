@@ -27,8 +27,8 @@ public class AsyncSingletonTests
         HttpClient result = await httpClientSingleton.Get();
         result.Should().NotBeNull();
 
-        Task t1 = Task.Run(() => client1 = httpClientSingleton.Get().Result);
-        Task t2 = Task.Run(() => client2 = httpClientSingleton.Get().Result);
+        Task t1 = Task.Run(async () => client1 = await httpClientSingleton.Get());
+        Task t2 = Task.Run(async () => client2 = await httpClientSingleton.Get());
 
         await Task.WhenAll(t1, t2);
 
