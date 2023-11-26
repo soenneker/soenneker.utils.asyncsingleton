@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Nito.AsyncEx;
+using Soenneker.Extensions.Task;
 using Soenneker.Utils.AsyncSingleton.Abstract;
 
 namespace Soenneker.Utils.AsyncSingleton;
@@ -53,7 +54,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
             if (_asyncInitializationFunc != null)
             {
-                tempInstance = await _asyncInitializationFunc();
+                tempInstance = await _asyncInitializationFunc().NoSync();
             }
             else if (_initializationFunc != null)
             {
@@ -127,7 +128,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
                 break;
             case IAsyncDisposable asyncDisposable:
                 // Kind of a weird situation - basically the instance is IAsyncDisposable but it's being disposed synchronously (which can happen).
-                asyncDisposable.DisposeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                asyncDisposable.DisposeAsync().GetAwaiter().GetResult();
                 break;
         }
 
