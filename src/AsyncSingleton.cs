@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Nito.AsyncEx;
-using Soenneker.Extensions.Task;
-using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.AsyncSingleton.Abstract;
 
 namespace Soenneker.Utils.AsyncSingleton;
@@ -55,7 +53,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
             if (_asyncInitializationFunc != null)
             {
-                tempInstance = await _asyncInitializationFunc().NoSync();
+                tempInstance = await _asyncInitializationFunc().ConfigureAwait(false);
             }
             else if (_initializationFunc != null)
             {
@@ -148,7 +146,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         switch (_instance)
         {
             case IAsyncDisposable asyncDisposable:
-                await asyncDisposable.DisposeAsync().NoSync();
+                await asyncDisposable.DisposeAsync().ConfigureAwait(false);
                 break;
             case IDisposable disposable:
                 disposable.Dispose();
