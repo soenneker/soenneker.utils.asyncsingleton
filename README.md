@@ -8,7 +8,7 @@
 ## Installation
 
 ```
-Install-Package Soenneker.Utils.AsyncSingleton
+dotnet add package Soenneker.Utils.AsyncSingleton
 ```
 
 ## Example
