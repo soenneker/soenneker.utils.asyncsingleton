@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Nito.AsyncEx;
+using Soenneker.Extensions.Task;
+using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.AsyncSingleton.Abstract;
 
 namespace Soenneker.Utils.AsyncSingleton;
@@ -17,6 +19,10 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
     private bool _disposed;
 
+    /// <summary>
+    /// If an async initialization func is used, it's recommend that GetSync() not be used.
+    /// </summary>
+    /// <param name="asyncInitializationFunc"></param>
     public AsyncSingleton(Func<Task<T>> asyncInitializationFunc) : this()
     {
         _asyncInitializationFunc = asyncInitializationFunc;
@@ -53,14 +59,16 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
             if (_asyncInitializationFunc != null)
             {
-                tempInstance = await _asyncInitializationFunc().ConfigureAwait(false);
+                tempInstance = await _asyncInitializationFunc().NoSync();
             }
             else if (_initializationFunc != null)
             {
                 tempInstance = _initializationFunc();
             }
             else
+            {
                 throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
+            }
 
             _instance = tempInstance;
         }
@@ -92,8 +100,10 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
                 // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
                 tempInstance = _asyncInitializationFunc().GetAwaiter().GetResult();
             }
-            else 
+            else
+            {
                 throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
+            }
 
             _instance = tempInstance;
         }
@@ -103,11 +113,17 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
     public void SetAsyncInitialization(Func<Task<T>> asyncInitializationFunc)
     {
+        if (_instance != null)
+            throw new Exception("Initializing an AsyncSingleton after it's already has been set is not allowed");
+
         _asyncInitializationFunc = asyncInitializationFunc;
     }
 
     public void SetInitialization(Func<T> initializationFunc)
     {
+        if (_instance != null)
+            throw new Exception("Initializing an AsyncSingleton after it's already has been set is not allowed");
+
         _initializationFunc = initializationFunc;
     }
 
@@ -146,7 +162,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         switch (_instance)
         {
             case IAsyncDisposable asyncDisposable:
-                await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+                await asyncDisposable.DisposeAsync().NoSync();
                 break;
             case IDisposable disposable:
                 disposable.Dispose();

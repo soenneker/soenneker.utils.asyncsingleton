@@ -11,7 +11,7 @@ namespace Soenneker.Utils.AsyncSingleton.Abstract;
 public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
 {
     /// <summary>
-    /// Utilizes double-check async locking to guarantee there's only one instance of the object. It's lazy; it's initialized only when retrieving.
+    /// Utilizes double-check async locking to guarantee there's only one instance of the object. It's lazy; it's initialized only when retrieving. <para/>
     /// This method should be called even if the initialization func was synchronous.
     /// </summary>
     /// <remarks>The initialization func needs to be set before calling this, either in the ctor or via the other methods</remarks>
@@ -21,7 +21,7 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
     ValueTask<T> Get();
 
     /// <summary>
-    /// <see cref="Get"/> should be used instead of this if possible. This method can block the calling thread! It's lazy; it's initialized only when retrieving.
+    /// <see cref="Get"/> should be used instead of this if possible. This method can block the calling thread! It's lazy; it's initialized only when retrieving. <para/>
     /// This can still be used with an async initialization func, but it will block on the func.
     /// </summary>
     /// <remarks>The initialization func needs to be set before calling this, either in the ctor or via the other methods</remarks>
@@ -31,13 +31,13 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
     T GetSync();
 
     /// <summary>
-    /// Allows for setting the initialization code outside of the constructor
+    /// Typically not used. <para/>
+    /// Allows for setting the initialization code outside of the constructor. <para/>
+    /// Initializing an AsyncSingleton after it's already has been set is not allowed
     /// </summary>
     void SetAsyncInitialization(Func<Task<T>> asyncInitializationFunc);
 
-    /// <summary>
-    /// Allows for setting the initialization code outside of the constructor
-    /// </summary>
+    /// <inheritdoc cref="SetAsyncInitialization"/>
     void SetInitialization(Func<T> initializationFunc);
 
     /// <summary>
