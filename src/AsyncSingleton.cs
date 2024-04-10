@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Nito.AsyncEx;
-using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.AsyncSingleton.Abstract;
 
@@ -14,7 +13,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
     private readonly AsyncLock _lock;
 
-    private Func<Task<T>>? _asyncInitializationFunc;
+    private Func<ValueTask<T>>? _asyncInitializationFunc;
     private Func<T>? _initializationFunc;
 
     private bool _disposed;
@@ -23,7 +22,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
     /// If an async initialization func is used, it's recommend that GetSync() not be used.
     /// </summary>
     /// <param name="asyncInitializationFunc"></param>
-    public AsyncSingleton(Func<Task<T>> asyncInitializationFunc) : this()
+    public AsyncSingleton(Func<ValueTask<T>> asyncInitializationFunc) : this()
     {
         _asyncInitializationFunc = asyncInitializationFunc;
     }
@@ -45,7 +44,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
     public async ValueTask<T> Get()
     {
         if (_disposed)
-            throw new ObjectDisposedException(nameof(AsyncSingleton<T>));
+            throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
 
         if (_instance != null)
             return _instance;
@@ -79,7 +78,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
     public T GetSync()
     {
         if (_disposed)
-            throw new ObjectDisposedException(nameof(AsyncSingleton<T>));
+            throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
 
         if (_instance != null)
             return _instance;
@@ -111,7 +110,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         return _instance;
     }
 
-    public void SetAsyncInitialization(Func<Task<T>> asyncInitializationFunc)
+    public void SetAsyncInitialization(Func<ValueTask<T>> asyncInitializationFunc)
     {
         if (_instance != null)
             throw new Exception("Initializing an AsyncSingleton after it's already has been set is not allowed");

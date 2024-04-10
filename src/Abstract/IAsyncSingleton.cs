@@ -35,7 +35,7 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
     /// Allows for setting the initialization code outside of the constructor. <para/>
     /// Initializing an AsyncSingleton after it's already has been set is not allowed
     /// </summary>
-    void SetAsyncInitialization(Func<Task<T>> asyncInitializationFunc);
+    void SetAsyncInitialization(Func<ValueTask<T>> asyncInitializationFunc);
 
     /// <inheritdoc cref="SetAsyncInitialization"/>
     void SetInitialization(Func<T> initializationFunc);

@@ -17,6 +17,19 @@ public class AsyncSingletonTests
     }
 
     [Fact]
+    public async Task Get_async_should_return_instance()
+    {
+        var httpClientSingleton = new AsyncSingleton<HttpClient>(async () =>
+        {
+            await Task.Delay(500);
+            return new HttpClient();
+        });
+
+        HttpClient result = await httpClientSingleton.Get();
+        result.Should().NotBeNull();
+    }
+
+    [Fact]
     public async Task Get_in_parallel_should_return_both_instances()
     {
         var httpClientSingleton = new AsyncSingleton<HttpClient>(() => new HttpClient());
@@ -45,7 +58,7 @@ public class AsyncSingletonTests
 
         await httpClientSingleton.DisposeAsync();
 
-        Func<Task> act = async () => await httpClientSingleton.Get();
+        Func<Task> act = async () => _ = await httpClientSingleton.Get();
 
         await act.Should().ThrowAsync<ObjectDisposedException>();
     }
