@@ -35,10 +35,28 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
     /// Allows for setting the initialization code outside the constructor. <para/>
     /// Initializing an AsyncSingleton after it's already has been set is not allowed
     /// </summary>
-    void SetAsyncInitialization(Func<object[]?, ValueTask<T>> asyncInitializationFunc);
+    void SetInitialization(Func<object[]?, ValueTask<T>> asyncInitializationFunc);
 
-    /// <inheritdoc cref="SetAsyncInitialization"/>
-    void SetInitialization(Func<object[]?, T> initializationFunc);
+    /// <summary>
+    /// Typically not used. <para/>
+    /// Allows for setting the initialization code outside the constructor. <para/>
+    /// Initializing an AsyncSingleton after it's already has been set is not allowed
+    /// </summary>
+    void SetInitialization(Func<object[]?, T> objectInitializationFunc);
+
+    /// <summary>
+    /// Typically not used. <para/>
+    /// Allows for setting the initialization code outside the constructor. <para/>
+    /// Initializing an AsyncSingleton after it's already has been set is not allowed
+    /// </summary>
+    void SetInitialization(Func<T> objectInitializationFunc);
+
+    /// <summary>
+    /// Typically not used. <para/>
+    /// Allows for setting the initialization code outside the constructor. <para/>
+    /// Initializing an AsyncSingleton after it's already has been set is not allowed
+    /// </summary>
+    void SetInitialization(Func<ValueTask<T>> objectInitializationFunc);
 
     /// <summary>
     /// If the instance is an IDisposable, Dispose will be called on the method (and DisposeAsync will not) <para/>
