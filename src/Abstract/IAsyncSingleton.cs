@@ -18,7 +18,7 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
     /// <exception cref="ObjectDisposedException"></exception>
     /// <exception cref="NullReferenceException"></exception>
     [Pure]
-    ValueTask<T> Get();
+    ValueTask<T> Get(object[]? objects = null);
 
     /// <summary>
     /// <see cref="Get"/> should be used instead of this if possible. This method can block the calling thread! It's lazy; it's initialized only when retrieving. <para/>
@@ -28,17 +28,17 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
     /// <exception cref="ObjectDisposedException"></exception>
     /// <exception cref="NullReferenceException"></exception>
     [Pure]
-    T GetSync();
+    T GetSync(object[]? objects = null);
 
     /// <summary>
     /// Typically not used. <para/>
-    /// Allows for setting the initialization code outside of the constructor. <para/>
+    /// Allows for setting the initialization code outside the constructor. <para/>
     /// Initializing an AsyncSingleton after it's already has been set is not allowed
     /// </summary>
-    void SetAsyncInitialization(Func<ValueTask<T>> asyncInitializationFunc);
+    void SetAsyncInitialization(Func<object[]?, ValueTask<T>> asyncInitializationFunc);
 
     /// <inheritdoc cref="SetAsyncInitialization"/>
-    void SetInitialization(Func<T> initializationFunc);
+    void SetInitialization(Func<object[]?, T> initializationFunc);
 
     /// <summary>
     /// If the instance is an IDisposable, Dispose will be called on the method (and DisposeAsync will not) <para/>

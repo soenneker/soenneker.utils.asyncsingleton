@@ -13,8 +13,8 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
     private readonly AsyncLock _lock;
 
-    private Func<ValueTask<T>>? _asyncInitializationFunc;
-    private Func<T>? _initializationFunc;
+    private Func<object[]?, ValueTask<T>>? _asyncInitializationFunc;
+    private Func<object[]?, T>? _initializationFunc;
 
     private bool _disposed;
 
@@ -22,12 +22,12 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
     /// If an async initialization func is used, it's recommend that GetSync() not be used.
     /// </summary>
     /// <param name="asyncInitializationFunc"></param>
-    public AsyncSingleton(Func<ValueTask<T>> asyncInitializationFunc) : this()
+    public AsyncSingleton(Func<object[]?, ValueTask<T>> asyncInitializationFunc) : this()
     {
         _asyncInitializationFunc = asyncInitializationFunc;
     }
 
-    public AsyncSingleton(Func<T> initializationFunc) : this()
+    public AsyncSingleton(Func<object[]?, T> initializationFunc) : this()
     {
         _initializationFunc = initializationFunc;
     }
@@ -41,7 +41,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         _lock = new AsyncLock();
     }
 
-    public async ValueTask<T> Get()
+    public async ValueTask<T> Get(object[]? objects = null)
     {
         if (_disposed)
             throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
@@ -58,11 +58,11 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
             if (_asyncInitializationFunc != null)
             {
-                tempInstance = await _asyncInitializationFunc().NoSync();
+                tempInstance = await _asyncInitializationFunc(objects).NoSync();
             }
             else if (_initializationFunc != null)
             {
-                tempInstance = _initializationFunc();
+                tempInstance = _initializationFunc(objects);
             }
             else
             {
@@ -75,7 +75,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         return _instance;
     }
 
-    public T GetSync()
+    public T GetSync(object[]? objects = null)
     {
         if (_disposed)
             throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
@@ -92,12 +92,12 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
             if (_initializationFunc != null)
             {
-                tempInstance = _initializationFunc();
+                tempInstance = _initializationFunc(objects);
             }
             else if (_asyncInitializationFunc != null)
             {
                 // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
-                tempInstance = _asyncInitializationFunc().GetAwaiter().GetResult();
+                tempInstance = _asyncInitializationFunc(objects).GetAwaiter().GetResult();
             }
             else
             {
@@ -110,7 +110,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         return _instance;
     }
 
-    public void SetAsyncInitialization(Func<ValueTask<T>> asyncInitializationFunc)
+    public void SetAsyncInitialization(Func<object[]?, ValueTask<T>> asyncInitializationFunc)
     {
         if (_instance != null)
             throw new Exception("Initializing an AsyncSingleton after it's already has been set is not allowed");
@@ -118,7 +118,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         _asyncInitializationFunc = asyncInitializationFunc;
     }
 
-    public void SetInitialization(Func<T> initializationFunc)
+    public void SetInitialization(Func<object[]?, T> initializationFunc)
     {
         if (_instance != null)
             throw new Exception("Initializing an AsyncSingleton after it's already has been set is not allowed");
@@ -128,9 +128,10 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
     public void Dispose()
     {
-        _disposed = true;
+        if (_disposed)
+            return;
 
-        GC.SuppressFinalize(this);
+        _disposed = true;
 
         if (_instance == null)
             return;
@@ -147,13 +148,15 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         }
 
         _instance = default;
+        GC.SuppressFinalize(this);
     }
 
     public async ValueTask DisposeAsync()
     {
-        _disposed = true;
+        if (_disposed)
+            return;
 
-        GC.SuppressFinalize(this);
+        _disposed = true;
 
         if (_instance == null)
             return;
@@ -169,5 +172,6 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         }
 
         _instance = default;
+        GC.SuppressFinalize(this);
     }
 }
