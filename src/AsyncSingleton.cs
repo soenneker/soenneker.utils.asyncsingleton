@@ -18,8 +18,8 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
     private Func<ValueTask<T>>? _asyncInitializationFunc;
     private Func<T>? _initializationFunc;
 
-    private Func<object[]?, ValueTask<T>>? _asyncObjectInitializationFunc;
-    private Func<object[]?, T>? _objectInitializationFunc;
+    private Func<object[], ValueTask<T>>? _asyncObjectInitializationFunc;
+    private Func<object[], T>? _objectInitializationFunc;
 
     private bool _disposed;
 
@@ -29,13 +29,13 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
     /// If an async initialization func is used, it's recommend that GetSync() not be used.
     /// </summary>
     /// <param name="asyncInitializationFunc"></param>
-    public AsyncSingleton(Func<object[]?, ValueTask<T>> asyncInitializationFunc) : this()
+    public AsyncSingleton(Func<object[], ValueTask<T>> asyncInitializationFunc) : this()
     {
         _initializationType = InitializationType.AsyncObject;
         _asyncObjectInitializationFunc = asyncInitializationFunc;
     }
 
-    public AsyncSingleton(Func<object[]?, T> func) : this()
+    public AsyncSingleton(Func<object[], T> func) : this()
     {
         _initializationType = InitializationType.SyncObject;
         _objectInitializationFunc = func;
@@ -65,7 +65,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         _lock = new AsyncLock();
     }
 
-    public async ValueTask<T> Get(params object[]? objects)
+    public async ValueTask<T> Get(params object[] objects)
     {
         if (_disposed)
             throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
@@ -130,7 +130,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         return _instance;
     }
 
-    public T GetSync(params object[]? objects)
+    public T GetSync(params object[] objects)
     {
         if (_disposed)
             throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
@@ -195,7 +195,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         return _instance;
     }
 
-    public void SetInitialization(Func<object[]?, T> objectInitializationFunc)
+    public void SetInitialization(Func<object[], T> objectInitializationFunc)
     {
         if (_instance != null)
             throw new Exception("Setting the initialization of an AsyncSingleton after it's already has been set is not allowed");
@@ -204,7 +204,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         _objectInitializationFunc = objectInitializationFunc;
     }
 
-    public void SetInitialization(Func<object[]?, ValueTask<T>> asyncObjectInitializationFunc)
+    public void SetInitialization(Func<object[], ValueTask<T>> asyncObjectInitializationFunc)
     {
         if (_instance != null)
             throw new Exception("Setting the initialization of an AsyncSingleton after it's already has been set is not allowed");

@@ -12,9 +12,9 @@ public class ObjectInitializationTests
     [Fact]
     public async Task Get_should_return_instance()
     {
-        var httpClientSingleton = new AsyncSingleton<HttpClient>((objects) =>
+        var httpClientSingleton = new AsyncSingleton<HttpClient>(objects =>
         {
-            var cancellationToken = (CancellationToken?) objects?[0];
+            var cancellationToken = (CancellationToken) objects[0];
 
             return new HttpClient();
         });
@@ -41,7 +41,7 @@ public class ObjectInitializationTests
     [Fact]
     public async Task Get_should_throw_when_no_objects()
     {
-        var httpClientSingleton = new AsyncSingleton<HttpClient>((objects) => { return new HttpClient(); });
+        var httpClientSingleton = new AsyncSingleton<HttpClient>(objects => { return new HttpClient(); });
 
         Func<Task> act = async () =>
         {
