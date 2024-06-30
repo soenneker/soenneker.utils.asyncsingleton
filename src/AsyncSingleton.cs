@@ -35,12 +35,6 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         _asyncObjectInitializationFunc = asyncInitializationFunc;
     }
 
-    public AsyncSingleton(Func<object[], T> func) : this()
-    {
-        _initializationType = InitializationType.SyncObject;
-        _objectInitializationFunc = func;
-    }
-
     /// <summary>
     /// If an async initialization func is used, it's recommend that GetSync() not be used.
     /// </summary>
@@ -48,6 +42,12 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
     {
         _initializationType = InitializationType.Async;
         _asyncInitializationFunc = asyncInitializationFunc;
+    }
+
+    public AsyncSingleton(Func<object[], T> func) : this()
+    {
+        _initializationType = InitializationType.SyncObject;
+        _objectInitializationFunc = func;
     }
 
     public AsyncSingleton(Func<T> initializationFunc) : this()
@@ -92,6 +92,15 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
                     tempInstance = await _asyncObjectInitializationFunc(objects).NoSync();
                     
                     break;
+                case InitializationType.Async:
+                    if (_asyncInitializationFunc == null)
+                        throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
+
+                    if (objects != null && objects.Any())
+                        throw new ArgumentException("Mismatched initialization: objects were sent when retrieving the singleton when none are expected");
+
+                    tempInstance = await _asyncInitializationFunc().NoSync();
+                    break;
                 case InitializationType.SyncObject:
                     if (_objectInitializationFunc == null)
                         throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
@@ -102,15 +111,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
                     tempInstance = _objectInitializationFunc(objects);
                     
                     break;
-                case InitializationType.Async:
-                    if (_asyncInitializationFunc == null)
-                        throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
 
-                    if (objects != null && objects.Any())
-                        throw new ArgumentException("Mismatched initialization: objects were sent when retrieving the singleton when none are expected");
-
-                    tempInstance = await _asyncInitializationFunc().NoSync();
-                    break;
                 case InitializationType.Sync:
                     if (_initializationFunc == null)
                         throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
@@ -157,15 +158,6 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
                     // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
                     tempInstance = _asyncObjectInitializationFunc(objects).NoSync().GetAwaiter().GetResult();
                     break;
-                case InitializationType.SyncObject:
-                    if (_objectInitializationFunc == null)
-                        throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
-
-                    if (objects == null || objects.Length == 0)
-                        throw new ArgumentException("Mismatched initialization: objects were not sent when retrieving the singleton when they are expected");
-
-                    tempInstance = _objectInitializationFunc(objects);
-                    break;
                 case InitializationType.Async:
                     if (_asyncInitializationFunc == null)
                         throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
@@ -175,6 +167,15 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
                     // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
                     tempInstance = _asyncInitializationFunc().NoSync().GetAwaiter().GetResult();
+                    break;
+                case InitializationType.SyncObject:
+                    if (_objectInitializationFunc == null)
+                        throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
+
+                    if (objects == null || objects.Length == 0)
+                        throw new ArgumentException("Mismatched initialization: objects were not sent when retrieving the singleton when they are expected");
+
+                    tempInstance = _objectInitializationFunc(objects);
                     break;
                 case InitializationType.Sync:
                     if (_initializationFunc == null)
@@ -193,15 +194,6 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         }
 
         return _instance;
-    }
-
-    public void SetInitialization(Func<object[], T> objectInitializationFunc)
-    {
-        if (_instance != null)
-            throw new Exception("Setting the initialization of an AsyncSingleton after it's already has been set is not allowed");
-
-        _initializationType = InitializationType.SyncObject;
-        _objectInitializationFunc = objectInitializationFunc;
     }
 
     public void SetInitialization(Func<object[], ValueTask<T>> asyncObjectInitializationFunc)
@@ -229,6 +221,15 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
         _initializationType = InitializationType.Sync;
         _initializationFunc = initializationFunc;
+    }
+
+    public void SetInitialization(Func<object[], T> objectInitializationFunc)
+    {
+        if (_instance != null)
+            throw new Exception("Setting the initialization of an AsyncSingleton after it's already has been set is not allowed");
+
+        _initializationType = InitializationType.SyncObject;
+        _objectInitializationFunc = objectInitializationFunc;
     }
 
     public void Dispose()

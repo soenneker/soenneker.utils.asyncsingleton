@@ -2,8 +2,8 @@
 
 public enum InitializationType
 {
+    AsyncObject,
     Async,
     Sync,
-    AsyncObject,
     SyncObject
 }
