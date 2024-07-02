@@ -20,7 +20,7 @@ public class ObjectInitializationTests
         });
 
         var cancellationToken = new CancellationToken();
-        HttpClient result = await httpClientSingleton.Get(cancellationToken);
+        HttpClient result = await httpClientSingleton.Get(cancellationToken, cancellationToken);
         result.Should().NotBeNull();
     }
 
@@ -30,9 +30,10 @@ public class ObjectInitializationTests
         var httpClientSingleton = new AsyncSingleton<HttpClient>(() => { return new HttpClient(); });
 
         var cancellationToken = new CancellationToken();
+
         Func<Task> act = async () =>
         {
-            HttpClient result = await httpClientSingleton.Get(cancellationToken);
+            HttpClient result = await httpClientSingleton.Get(cancellationToken, cancellationToken);
         };
 
         await act.Should().ThrowAsync<ArgumentException>();
