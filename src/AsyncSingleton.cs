@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Nito.AsyncEx;
 using Soenneker.Extensions.ValueTask;
@@ -67,13 +68,18 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
     public async ValueTask<T> Get(params object[] objects)
     {
+        return await Get(CancellationToken.None, objects);
+    }
+
+    public async ValueTask<T> Get(CancellationToken cancellationToken, params object[] objects)
+    {
         if (_disposed)
             throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
 
         if (_instance != null)
             return _instance;
 
-        using (await _lock.LockAsync().ConfigureAwait(false))
+        using (await _lock.LockAsync(cancellationToken).ConfigureAwait(false))
         {
             if (_instance != null)
                 return _instance;
@@ -133,13 +139,18 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
     public T GetSync(params object[] objects)
     {
+        return GetSync(CancellationToken.None, objects);
+    }
+
+    public T GetSync(CancellationToken cancellationToken, params object[] objects)
+    {
         if (_disposed)
             throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
 
         if (_instance != null)
             return _instance;
 
-        using (_lock.Lock())
+        using (_lock.Lock(cancellationToken))
         {
             if (_instance != null)
                 return _instance;

@@ -98,4 +98,14 @@ public class AsyncSingletonTests
 
         await httpClientSingleton.DisposeAsync();
     }
+
+    [Fact]
+    public async Task DisposeAsync_with_cancellationToken_with_nondisposable_should_not_throw()
+    {
+        var httpClientSingleton = new AsyncSingleton<object>(() => new object());
+
+        _ = await httpClientSingleton.Get();
+
+        await httpClientSingleton.DisposeAsync();
+    }
 }

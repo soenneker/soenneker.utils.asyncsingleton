@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Soenneker.Utils.AsyncSingleton.Abstract;
@@ -21,6 +22,16 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
     ValueTask<T> Get(object[] objects);
 
     /// <summary>
+    /// Utilizes double-check async locking to guarantee there's only one instance of the object. It's lazy; it's initialized only when retrieving. <para/>
+    /// This method should be called even if the initialization func was synchronous.
+    /// </summary>
+    /// <remarks>The initialization func needs to be set before calling this, either in the ctor or via the other methods</remarks>
+    /// <exception cref="ObjectDisposedException"></exception>
+    /// <exception cref="NullReferenceException"></exception>
+    [Pure]
+    ValueTask<T> Get(CancellationToken cancellationToken, object[] objects);
+
+    /// <summary>
     /// <see cref="Get"/> should be used instead of this if possible. This method can block the calling thread! It's lazy; it's initialized only when retrieving. <para/>
     /// This can still be used with an async initialization func, but it will block on the func.
     /// </summary>
@@ -29,6 +40,16 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
     /// <exception cref="NullReferenceException"></exception>
     [Pure]
     T GetSync(object[] objects);
+
+    /// <summary>
+    /// <see cref="Get(object[])"/> should be used instead of this if possible. This method can block the calling thread! It's lazy; it's initialized only when retrieving. <para/>
+    /// This can still be used with an async initialization func, but it will block on the func.
+    /// </summary>
+    /// <remarks>The initialization func needs to be set before calling this, either in the ctor or via the other methods</remarks>
+    /// <exception cref="ObjectDisposedException"></exception>
+    /// <exception cref="NullReferenceException"></exception>
+    [Pure]
+    T GetSync(CancellationToken cancellationToken, object[] objects);
 
     /// <summary>
     /// Typically not used. <para/>
