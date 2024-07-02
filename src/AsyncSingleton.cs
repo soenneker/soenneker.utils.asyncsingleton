@@ -66,9 +66,9 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         _lock = new AsyncLock();
     }
 
-    public async ValueTask<T> Get(params object[] objects)
+    public ValueTask<T> Get(params object[] objects)
     {
-        return await Get(CancellationToken.None, objects);
+        return Get(CancellationToken.None, objects);
     }
 
     public async ValueTask<T> Get(CancellationToken cancellationToken, params object[] objects)
