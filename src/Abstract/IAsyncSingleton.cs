@@ -51,33 +51,27 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
     [Pure]
     T GetSync(CancellationToken cancellationToken, object[] objects);
 
-    /// <summary>
-    /// Typically not used. <para/>
-    /// Allows for setting the initialization code outside the constructor. <para/>
-    /// Initializing an AsyncSingleton after it's already has been set is not allowed
-    /// </summary>
-    void SetInitialization(Func<object[], ValueTask<T>> asyncInitializationFunc);
+    /// <see cref="SetInitialization(Func{T})"/>
+    void SetInitialization(Func<CancellationToken, object[], ValueTask<T>> func);
+
+    /// <see cref="SetInitialization(Func{T})"/>
+    void SetInitialization(Func<object[], ValueTask<T>> func);
+
+    /// <see cref="SetInitialization(Func{T})"/>
+    void SetInitialization(Func<object[], T> func);
+
+    /// <see cref="SetInitialization(Func{T})"/>
+    void SetInitialization(Func<CancellationToken, object[], T> func);
 
     /// <summary>
     /// Typically not used. <para/>
     /// Allows for setting the initialization code outside the constructor. <para/>
     /// Initializing an AsyncSingleton after it's already has been set is not allowed
     /// </summary>
-    void SetInitialization(Func<object[], T> objectInitializationFunc);
+    void SetInitialization(Func<T> func);
 
-    /// <summary>
-    /// Typically not used. <para/>
-    /// Allows for setting the initialization code outside the constructor. <para/>
-    /// Initializing an AsyncSingleton after it's already has been set is not allowed
-    /// </summary>
-    void SetInitialization(Func<T> objectInitializationFunc);
-
-    /// <summary>
-    /// Typically not used. <para/>
-    /// Allows for setting the initialization code outside the constructor. <para/>
-    /// Initializing an AsyncSingleton after it's already has been set is not allowed
-    /// </summary>
-    void SetInitialization(Func<ValueTask<T>> objectInitializationFunc);
+    /// <see cref="SetInitialization(Func{T})"/>
+    void SetInitialization(Func<ValueTask<T>> func);
 
     /// <summary>
     /// If the instance is an IDisposable, Dispose will be called on the method (and DisposeAsync will not) <para/>

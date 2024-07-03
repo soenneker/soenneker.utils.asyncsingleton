@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Xunit;
@@ -107,5 +108,21 @@ public class AsyncSingletonTests
         _ = await httpClientSingleton.Get();
 
         await httpClientSingleton.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task Async_with_object_and_cancellationToken_should_not_throw()
+    {
+        var httpClientSingleton = new AsyncSingleton<object>(async (token, obj) => new object());
+
+        _ = await httpClientSingleton.Get(CancellationToken.None, 3);
+    }
+
+    [Fact]
+    public async Task Sync_with_object_and_cancellationToken_should_not_throw()
+    {
+        var httpClientSingleton = new AsyncSingleton<object>((token, obj) => new object());
+
+        var httpClient = httpClientSingleton.GetSync(CancellationToken.None, 3);
     }
 }
