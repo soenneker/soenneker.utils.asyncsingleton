@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Nito.AsyncEx;
@@ -115,48 +114,30 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
                 if (_asyncObjectFunc == null)
                     throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
 
-                if (objects == null || objects.Length == 0)
-                    throw new ArgumentException("Mismatched initialization: objects were not sent when retrieving the singleton when they are expected");
-
                 return await _asyncObjectFunc(objects).NoSync();
             case InitializationType.AsyncObjectToken:
                 if (_asyncObjectTokenFunc == null)
                     throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
-
-                if (objects == null || objects.Length == 0)
-                    throw new ArgumentException("Mismatched initialization: objects were not sent when retrieving the singleton when they are expected");
 
                 return await _asyncObjectTokenFunc(cancellationToken, objects).NoSync();
             case InitializationType.Async:
                 if (_asyncFunc == null)
                     throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
 
-                if (objects != null && objects.Any())
-                    throw new ArgumentException("Mismatched initialization: objects were sent when retrieving the singleton when none are expected");
-
                 return await _asyncFunc().NoSync();
             case InitializationType.SyncObject:
                 if (_objectFunc == null)
                     throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
-
-                if (objects == null || objects.Length == 0)
-                    throw new ArgumentException("Mismatched initialization: objects were not sent when retrieving the singleton when they are expected");
 
                 return _objectFunc(objects);
             case InitializationType.SyncObjectToken:
                 if (_objectTokenFunc == null)
                     throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
 
-                if (objects == null || objects.Length == 0)
-                    throw new ArgumentException("Mismatched initialization: objects were not sent when retrieving the singleton when they are expected");
-
                 return _objectTokenFunc(cancellationToken, objects);
             case InitializationType.Sync:
                 if (_func == null)
                     throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
-
-                if (objects != null && objects.Any())
-                    throw new ArgumentException("Mismatched initialization: objects were sent when retrieving the singleton when none are expected");
 
                 return _func();
             default:
@@ -194,17 +175,11 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
                 if (_asyncObjectFunc == null)
                     throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
 
-                if (objects == null || objects.Length == 0)
-                    throw new ArgumentException("Mismatched initialization: objects were not sent when retrieving the singleton when they are expected");
-
                 // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
                 return _asyncObjectFunc(objects).NoSync().GetAwaiter().GetResult();
             case InitializationType.AsyncObjectToken:
                 if (_asyncObjectTokenFunc == null)
                     throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
-
-                if (objects == null || objects.Length == 0)
-                    throw new ArgumentException("Mismatched initialization: objects were not sent when retrieving the singleton when they are expected");
 
                 // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
                 return _asyncObjectTokenFunc(cancellationToken, objects).NoSync().GetAwaiter().GetResult();
@@ -212,33 +187,21 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
                 if (_asyncFunc == null)
                     throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
 
-                if (objects != null && objects.Any())
-                    throw new ArgumentException("Mismatched initialization: objects were sent when retrieving the singleton when none are expected");
-
                 // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
                 return _asyncFunc().NoSync().GetAwaiter().GetResult();
             case InitializationType.SyncObject:
                 if (_objectFunc == null)
                     throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
 
-                if (objects == null || objects.Length == 0)
-                    throw new ArgumentException("Mismatched initialization: objects were not sent when retrieving the singleton when they are expected");
-
                 return _objectFunc(objects);
             case InitializationType.SyncObjectToken:
                 if (_objectTokenFunc == null)
                     throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
 
-                if (objects == null || objects.Length == 0)
-                    throw new ArgumentException("Mismatched initialization: objects were not sent when retrieving the singleton when they are expected");
-
                 return _objectTokenFunc(cancellationToken, objects);
             case InitializationType.Sync:
                 if (_func == null)
                     throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
-
-                if (objects != null && objects.Any())
-                    throw new ArgumentException("Mismatched initialization: objects were sent when retrieving the singleton when none are expected");
 
                 return _func();
             default:
