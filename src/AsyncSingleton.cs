@@ -102,7 +102,8 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
             if (_instance != null)
                 return _instance;
 
-            return await GetInternal(cancellationToken, objects);
+            _instance = await GetInternal(cancellationToken, objects);
+            return _instance;
         }
     }
 
@@ -163,7 +164,8 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
             if (_instance != null)
                 return _instance;
 
-            return GetSyncInternal(cancellationToken, objects);
+            _instance = GetSyncInternal(cancellationToken, objects);
+            return _instance;
         }
     }
 

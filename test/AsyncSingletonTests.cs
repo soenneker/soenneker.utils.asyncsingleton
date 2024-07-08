@@ -125,4 +125,55 @@ public class AsyncSingletonTests
 
         var httpClient = httpClientSingleton.GetSync(CancellationToken.None, 3);
     }
+
+    [Fact]
+    public async Task Async_Get_should_only_initialize_once()
+    {
+        int x = 0;
+
+        var httpClientSingleton = new AsyncSingleton<HttpClient>(async () =>
+        {
+            x++;
+            return new HttpClient();
+        });
+
+        HttpClient result = await httpClientSingleton.Get();
+        result = await httpClientSingleton.Get();
+
+        x.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Sync_Get_Async_should_only_initialize_once()
+    {
+        int x = 0;
+
+        var httpClientSingleton = new AsyncSingleton<HttpClient>(() =>
+        {
+            x++;
+            return new HttpClient();
+        });
+
+        HttpClient result = await httpClientSingleton.Get();
+        result = await httpClientSingleton.Get();
+
+        x.Should().Be(1);
+    }
+
+    [Fact]
+    public void Sync_Get_Sync_should_only_initialize_once()
+    {
+        int x = 0;
+
+        var httpClientSingleton = new AsyncSingleton<HttpClient>(() =>
+        {
+            x++;
+            return new HttpClient();
+        });
+
+        HttpClient result = httpClientSingleton.GetSync();
+        result = httpClientSingleton.GetSync();
+
+        x.Should().Be(1);
+    }
 }
