@@ -8,88 +8,106 @@ using Soenneker.Utils.AsyncSingleton.Enums;
 
 namespace Soenneker.Utils.AsyncSingleton;
 
-///<inheritdoc cref="IAsyncSingleton"/>
-public class AsyncSingleton : IAsyncSingleton
+///<inheritdoc cref="IAsyncSingleton{T}"/>
+public class AsyncSingleton<T> : IAsyncSingleton<T>
 {
-    private object? _instance;
+    private T? _instance;
+
     private readonly AsyncLock _lock;
 
-    private Func<ValueTask<object>>? _asyncFunc;
-    private Func<object>? _func;
+    private Func<ValueTask<T>>? _asyncFunc;
+    private Func<T>? _func;
 
-    private Func<object[], ValueTask<object>>? _asyncObjectFunc;
-    private Func<object[], object>? _objectFunc;
+    private Func<object[], ValueTask<T>>? _asyncObjectFunc;
+    private Func<object[], T>? _objectFunc;
 
-    private Func<CancellationToken, object[], ValueTask<object>>? _asyncObjectTokenFunc;
-    private Func<CancellationToken, object[], object>? _objectTokenFunc;
+    private Func<CancellationToken, object[], ValueTask<T>>? _asyncObjectTokenFunc;
+    private Func<CancellationToken, object[], T>? _objectTokenFunc;
 
     private bool _disposed;
+
     private InitializationType _initializationType;
 
-    public AsyncSingleton(Func<object[], ValueTask<object>> func) : this()
+    /// <summary>
+    /// If an async initialization func is used, it's recommend that GetSync() not be used.
+    /// </summary>
+    /// <param name="func"></param>
+    public AsyncSingleton(Func<object[], ValueTask<T>> func) : this()
     {
         _initializationType = InitializationType.AsyncObject;
         _asyncObjectFunc = func;
     }
 
-    public AsyncSingleton(Func<CancellationToken, object[], ValueTask<object>> func) : this()
+    /// <summary>
+    /// If an async initialization func is used, it's recommend that GetSync() not be used.
+    /// </summary>
+    /// <param name="func"></param>
+    public AsyncSingleton(Func<CancellationToken, object[], ValueTask<T>> func) : this()
     {
         _initializationType = InitializationType.AsyncObjectToken;
         _asyncObjectTokenFunc = func;
     }
 
-    public AsyncSingleton(Func<ValueTask<object>> func) : this()
+    /// <summary>
+    /// If an async initialization func is used, it's recommend that GetSync() not be used.
+    /// </summary>
+    public AsyncSingleton(Func<ValueTask<T>> func) : this()
     {
         _initializationType = InitializationType.Async;
         _asyncFunc = func;
     }
 
-    public AsyncSingleton(Func<CancellationToken, object[], object> func) : this()
+    public AsyncSingleton(Func<CancellationToken, object[], T> func) : this()
     {
         _initializationType = InitializationType.SyncObjectToken;
         _objectTokenFunc = func;
     }
 
-    public AsyncSingleton(Func<object[], object> func) : this()
+    public AsyncSingleton(Func<object[], T> func) : this()
     {
         _initializationType = InitializationType.SyncObject;
         _objectFunc = func;
     }
 
-    public AsyncSingleton(Func<object> func) : this()
+    public AsyncSingleton(Func<T> func) : this()
     {
         _initializationType = InitializationType.Sync;
         _func = func;
     }
 
+    // ReSharper disable once MemberCanBePrivate.Global
+    /// <summary>
+    /// If this is used, be sure to set the initialization func via SetInitialization(), or use another constructor.
+    /// </summary>
     public AsyncSingleton()
     {
         _lock = new AsyncLock();
     }
 
-    public async ValueTask Init(params object[] objects)
+    public ValueTask<T> Get(params object[] objects)
     {
-        await Init(CancellationToken.None, objects);
+        return Get(CancellationToken.None, objects);
     }
 
-    public async ValueTask Init(CancellationToken cancellationToken, params object[] objects)
+    public virtual async ValueTask<T> Get(CancellationToken cancellationToken, params object[] objects)
     {
         if (_disposed)
-            throw new ObjectDisposedException(nameof(AsyncSingleton));
+            throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
 
         if (_instance != null)
-            return;
+            return _instance;
 
         using (await _lock.LockAsync(cancellationToken).ConfigureAwait(false))
         {
             if (_instance != null)
-                return;
+                return _instance;
 
-            _instance = await InitInternal(cancellationToken, objects);
+            _instance = await GetInternal(cancellationToken, objects);
+            return _instance;
         }
     }
 
-    private async ValueTask<object> InitInternal(CancellationToken cancellationToken, params object[] objects)
+    private async ValueTask<T> GetInternal(CancellationToken cancellationToken, params object[] objects)
     {
         switch (_initializationType)
         {
@@ -128,29 +146,30 @@ public class AsyncSingleton : IAsyncSingleton
         }
     }
 
-    public void InitSync(params object[] objects)
+    public T GetSync(params object[] objects)
     {
-        InitSync(CancellationToken.None, objects);
+        return GetSync(CancellationToken.None, objects);
     }
 
-    public void InitSync(CancellationToken cancellationToken, params object[] objects)
+    public T GetSync(CancellationToken cancellationToken, params object[] objects)
     {
         if (_disposed)
-            throw new ObjectDisposedException(nameof(AsyncSingleton));
+            throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
 
         if (_instance != null)
-            return;
+            return _instance;
 
         using (_lock.Lock(cancellationToken))
         {
             if (_instance != null)
-                return;
+                return _instance;
 
-            _instance = InitSyncInternal(cancellationToken, objects);
+            _instance = GetSyncInternal(cancellationToken, objects);
+            return _instance;
         }
     }
 
-    private object InitSyncInternal(CancellationToken cancellationToken, params object[] objects)
+    private T GetSyncInternal(CancellationToken cancellationToken, params object[] objects)
     {
         switch (_initializationType)
         {
@@ -158,16 +177,19 @@ public class AsyncSingleton : IAsyncSingleton
                 if (_asyncObjectFunc == null)
                     throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
 
+                // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
                 return _asyncObjectFunc(objects).NoSync().GetAwaiter().GetResult();
             case InitializationType.AsyncObjectToken:
                 if (_asyncObjectTokenFunc == null)
                     throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
 
+                // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
                 return _asyncObjectTokenFunc(cancellationToken, objects).NoSync().GetAwaiter().GetResult();
             case InitializationType.Async:
                 if (_asyncFunc == null)
                     throw new NullReferenceException("Initialization func for AsyncSingleton cannot be null");
 
+                // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
                 return _asyncFunc().NoSync().GetAwaiter().GetResult();
             case InitializationType.SyncObject:
                 if (_objectFunc == null)
@@ -189,7 +211,7 @@ public class AsyncSingleton : IAsyncSingleton
         }
     }
 
-    public void SetInitialization(Func<object[], ValueTask<object>> func)
+    public void SetInitialization(Func<object[], ValueTask<T>> func)
     {
         if (_instance != null)
             throw new Exception("Setting the initialization of an AsyncSingleton after it's already has been set is not allowed");
@@ -198,7 +220,7 @@ public class AsyncSingleton : IAsyncSingleton
         _asyncObjectFunc = func;
     }
 
-    public void SetInitialization(Func<CancellationToken, object[], ValueTask<object>> func)
+    public void SetInitialization(Func<CancellationToken, object[], ValueTask<T>> func)
     {
         if (_instance != null)
             throw new Exception("Setting the initialization of an AsyncSingleton after it's already has been set is not allowed");
@@ -207,7 +229,7 @@ public class AsyncSingleton : IAsyncSingleton
         _asyncObjectTokenFunc = func;
     }
 
-    public void SetInitialization(Func<ValueTask<object>> func)
+    public void SetInitialization(Func<ValueTask<T>> func)
     {
         if (_instance != null)
             throw new Exception("Setting the initialization of an AsyncSingleton after it's already has been set is not allowed");
@@ -216,7 +238,7 @@ public class AsyncSingleton : IAsyncSingleton
         _asyncFunc = func;
     }
 
-    public void SetInitialization(Func<object[], object> func)
+    public void SetInitialization(Func<object[], T> func)
     {
         if (_instance != null)
             throw new Exception("Setting the initialization of an AsyncSingleton after it's already has been set is not allowed");
@@ -225,7 +247,7 @@ public class AsyncSingleton : IAsyncSingleton
         _objectFunc = func;
     }
 
-    public void SetInitialization(Func<CancellationToken, object[], object> func)
+    public void SetInitialization(Func<CancellationToken, object[], T> func)
     {
         if (_instance != null)
             throw new Exception("Setting the initialization of an AsyncSingleton after it's already has been set is not allowed");
@@ -234,7 +256,7 @@ public class AsyncSingleton : IAsyncSingleton
         _objectTokenFunc = func;
     }
 
-    public void SetInitialization(Func<object> func)
+    public void SetInitialization(Func<T> func)
     {
         if (_instance != null)
             throw new Exception("Setting the initialization of an AsyncSingleton after it's already has been set is not allowed");
@@ -259,6 +281,7 @@ public class AsyncSingleton : IAsyncSingleton
                 disposable.Dispose();
                 break;
             case IAsyncDisposable asyncDisposable:
+                // Kind of a weird situation - basically the instance is IAsyncDisposable but it's being disposed synchronously (which can happen).
                 asyncDisposable.DisposeAsync().NoSync().GetAwaiter().GetResult();
                 break;
         }

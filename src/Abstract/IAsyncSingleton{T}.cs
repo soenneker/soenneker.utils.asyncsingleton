@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,7 +9,7 @@ namespace Soenneker.Utils.AsyncSingleton.Abstract;
 /// An externally initializing singleton that uses double-check asynchronous locking, with optional async and sync disposal
 /// </summary>
 /// <remarks>Be sure to dispose of this gracefully if using a Disposable type</remarks>
-public interface IAsyncSingleton : IDisposable, IAsyncDisposable
+public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
 {
     /// <summary>
     /// Utilizes double-check async locking to guarantee there's only one instance of the object. It's lazy; it's initialized only when retrieving. <para/>
@@ -17,7 +18,8 @@ public interface IAsyncSingleton : IDisposable, IAsyncDisposable
     /// <remarks>The initialization func needs to be set before calling this, either in the ctor or via the other methods</remarks>
     /// <exception cref="ObjectDisposedException"></exception>
     /// <exception cref="NullReferenceException"></exception>
-    ValueTask Init(object[] objects);
+    [Pure]
+    ValueTask<T> Get(object[] objects);
 
     /// <summary>
     /// Utilizes double-check async locking to guarantee there's only one instance of the object. It's lazy; it's initialized only when retrieving. <para/>
@@ -26,47 +28,50 @@ public interface IAsyncSingleton : IDisposable, IAsyncDisposable
     /// <remarks>The initialization func needs to be set before calling this, either in the ctor or via the other methods</remarks>
     /// <exception cref="ObjectDisposedException"></exception>
     /// <exception cref="NullReferenceException"></exception>
-    ValueTask Init(CancellationToken cancellationToken, object[] objects);
+    [Pure]
+    ValueTask<T> Get(CancellationToken cancellationToken, object[] objects);
 
     /// <summary>
-    /// <see cref="Init(System.Threading.CancellationToken,object[])"/> should be used instead of this if possible. This method can block the calling thread! It's lazy; it's initialized only when retrieving. <para/>
+    /// <see cref="Get"/> should be used instead of this if possible. This method can block the calling thread! It's lazy; it's initialized only when retrieving. <para/>
     /// This can still be used with an async initialization func, but it will block on the func.
     /// </summary>
     /// <remarks>The initialization func needs to be set before calling this, either in the ctor or via the other methods</remarks>
     /// <exception cref="ObjectDisposedException"></exception>
     /// <exception cref="NullReferenceException"></exception>
-    void InitSync(object[] objects);
+    [Pure]
+    T GetSync(object[] objects);
 
     /// <summary>
-    /// <see cref="Init(object[])"/> should be used instead of this if possible. This method can block the calling thread! It's lazy; it's initialized only when retrieving. <para/>
+    /// <see cref="Get(object[])"/> should be used instead of this if possible. This method can block the calling thread! It's lazy; it's initialized only when retrieving. <para/>
     /// This can still be used with an async initialization func, but it will block on the func.
     /// </summary>
     /// <remarks>The initialization func needs to be set before calling this, either in the ctor or via the other methods</remarks>
     /// <exception cref="ObjectDisposedException"></exception>
     /// <exception cref="NullReferenceException"></exception>
-    void InitSync(CancellationToken cancellationToken, object[] objects);
+    [Pure]
+    T GetSync(CancellationToken cancellationToken, object[] objects);
 
-    /// <see cref="SetInitialization(Func{object})"/>
-    void SetInitialization(Func<CancellationToken, object[], ValueTask<object>> func);
+    /// <see cref="SetInitialization(Func{T})"/>
+    void SetInitialization(Func<CancellationToken, object[], ValueTask<T>> func);
 
-    /// <see cref="SetInitialization(Func{object})"/>
-    void SetInitialization(Func<object[], ValueTask<object>> func);
+    /// <see cref="SetInitialization(Func{T})"/>
+    void SetInitialization(Func<object[], ValueTask<T>> func);
 
-    /// <see cref="SetInitialization(Func{object})"/>
-    void SetInitialization(Func<object[], object> func);
+    /// <see cref="SetInitialization(Func{T})"/>
+    void SetInitialization(Func<object[], T> func);
 
-    /// <see cref="SetInitialization(Func{object})"/>
-    void SetInitialization(Func<CancellationToken, object[], object> func);
+    /// <see cref="SetInitialization(Func{T})"/>
+    void SetInitialization(Func<CancellationToken, object[], T> func);
 
     /// <summary>
     /// Typically not used. <para/>
     /// Allows for setting the initialization code outside the constructor. <para/>
     /// Initializing an AsyncSingleton after it's already has been set is not allowed
     /// </summary>
-    void SetInitialization(Func<object> func);
+    void SetInitialization(Func<T> func);
 
-    /// <see cref="SetInitialization(Func{object})"/>
-    void SetInitialization(Func<ValueTask<object>> func);
+    /// <see cref="SetInitialization(Func{T})"/>
+    void SetInitialization(Func<ValueTask<T>> func);
 
     /// <summary>
     /// If the instance is an IDisposable, Dispose will be called on the method (and DisposeAsync will not) <para/>
