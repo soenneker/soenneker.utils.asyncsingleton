@@ -9,7 +9,7 @@
 
     <PropertyGroup>
         <Description>An externally initializing singleton that uses double-check asynchronous locking, with optional async and sync disposal</Description>
-        <Version Condition="'$(BUILD_VERSION)' == ''">2.1.0</Version>
+        <Version Condition="'$(BUILD_VERSION)' == ''">3.0.0</Version>
         <Version Condition="'$(BUILD_VERSION)' != ''">$(BUILD_VERSION)</Version>
         <AssemblyName>Soenneker.Utils.AsyncSingleton</AssemblyName>
         <PackageId>Soenneker.Utils.AsyncSingleton</PackageId>
