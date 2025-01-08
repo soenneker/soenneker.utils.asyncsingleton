@@ -9,6 +9,7 @@ using Soenneker.Utils.AsyncSingleton.Enums;
 namespace Soenneker.Utils.AsyncSingleton;
 
 ///<inheritdoc cref="IAsyncSingleton{T}"/>
+// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
 public class AsyncSingleton<T> : IAsyncSingleton<T>
 {
     private T? _instance;

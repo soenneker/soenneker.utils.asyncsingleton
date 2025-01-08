@@ -26,7 +26,7 @@ public interface IAsyncSingleton : IDisposable, IAsyncDisposable
     /// <remarks>The initialization func needs to be set before calling this, either in the ctor or via the other methods</remarks>
     /// <exception cref="ObjectDisposedException"></exception>
     /// <exception cref="NullReferenceException"></exception>
-    ValueTask Init(CancellationToken cancellationToken, object[] objects);
+    ValueTask Init(CancellationToken cancellationToken, params object[] objects);
 
     /// <summary>
     /// <see cref="Init(System.Threading.CancellationToken,object[])"/> should be used instead of this if possible. This method can block the calling thread! It's lazy; it's initialized only when retrieving. <para/>
@@ -44,7 +44,7 @@ public interface IAsyncSingleton : IDisposable, IAsyncDisposable
     /// <remarks>The initialization func needs to be set before calling this, either in the ctor or via the other methods</remarks>
     /// <exception cref="ObjectDisposedException"></exception>
     /// <exception cref="NullReferenceException"></exception>
-    void InitSync(CancellationToken cancellationToken, object[] objects);
+    void InitSync(CancellationToken cancellationToken, params object[] objects);
 
     /// <see cref="SetInitialization(Func{object})"/>
     void SetInitialization(Func<CancellationToken, object[], ValueTask<object>> func);

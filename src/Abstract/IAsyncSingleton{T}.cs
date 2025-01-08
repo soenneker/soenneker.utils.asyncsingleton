@@ -29,7 +29,7 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
     /// <exception cref="ObjectDisposedException"></exception>
     /// <exception cref="NullReferenceException"></exception>
     [Pure]
-    ValueTask<T> Get(CancellationToken cancellationToken, object[] objects);
+    ValueTask<T> Get(CancellationToken cancellationToken, params object[] objects);
 
     /// <summary>
     /// <see cref="Get"/> should be used instead of this if possible. This method can block the calling thread! It's lazy; it's initialized only when retrieving. <para/>
@@ -49,7 +49,7 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
     /// <exception cref="ObjectDisposedException"></exception>
     /// <exception cref="NullReferenceException"></exception>
     [Pure]
-    T GetSync(CancellationToken cancellationToken, object[] objects);
+    T GetSync(CancellationToken cancellationToken, params object[] objects);
 
     /// <see cref="SetInitialization(Func{T})"/>
     void SetInitialization(Func<CancellationToken, object[], ValueTask<T>> func);
