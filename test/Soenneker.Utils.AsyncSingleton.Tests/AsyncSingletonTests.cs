@@ -104,7 +104,7 @@ public class AsyncSingletonTests
     [Fact]
     public async Task Async_with_object_and_cancellationToken_should_not_throw()
     {
-        var httpClientSingleton = new AsyncSingleton(async (token, obj) => new object());
+        var httpClientSingleton = new AsyncSingleton(async (token, _) => new object());
 
         await httpClientSingleton.Init(CancellationToken.None, 3);
     }

@@ -67,9 +67,9 @@ public class AsyncSingleton : IAsyncSingleton
         _lock = new AsyncLock();
     }
 
-    public async ValueTask Init(params object[] objects)
+    public ValueTask Init(params object[] objects)
     {
-        await Init(CancellationToken.None, objects);
+        return Init(CancellationToken.None, objects);
     }
 
     public async ValueTask Init(CancellationToken cancellationToken, params object[] objects)
@@ -85,7 +85,7 @@ public class AsyncSingleton : IAsyncSingleton
             if (_instance != null)
                 return;
 
-            _instance = await InitInternal(cancellationToken, objects);
+            _instance = await InitInternal(cancellationToken, objects).NoSync();
         }
     }
 
@@ -263,7 +263,7 @@ public class AsyncSingleton : IAsyncSingleton
                 break;
         }
 
-        _instance = default;
+        _instance = null;
         GC.SuppressFinalize(this);
     }
 
@@ -287,7 +287,7 @@ public class AsyncSingleton : IAsyncSingleton
                 break;
         }
 
-        _instance = default;
+        _instance = null;
         GC.SuppressFinalize(this);
     }
 }
