@@ -1,6 +1,6 @@
 ﻿namespace Soenneker.Utils.AsyncSingleton.Enums;
 
-public enum InitializationType
+public enum InitializationType : byte
 {
     AsyncObjectToken,
     SyncObjectToken,
