@@ -41,16 +41,6 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
     [Pure]
     T GetSync(object[] objects);
 
-    /// <summary>
-    /// <see cref="Get(object[])"/> should be used instead of this if possible. This method can block the calling thread! It's lazy; it's initialized only when retrieving. <para/>
-    /// This can still be used with an async initialization func, but it will block on the func.
-    /// </summary>
-    /// <remarks>The initialization func needs to be set before calling this, either in the ctor or via the other methods</remarks>
-    /// <exception cref="ObjectDisposedException"></exception>
-    /// <exception cref="NullReferenceException"></exception>
-    [Pure]
-    T GetSync(CancellationToken cancellationToken, params object[] objects);
-
     /// <see cref="SetInitialization(Func{T})"/>
     void SetInitialization(Func<CancellationToken, object[], ValueTask<T>> func);
 

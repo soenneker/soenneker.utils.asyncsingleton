@@ -37,15 +37,6 @@ public interface IAsyncSingleton : IDisposable, IAsyncDisposable
     /// <exception cref="NullReferenceException"></exception>
     void InitSync(object[] objects);
 
-    /// <summary>
-    /// <see cref="Init(object[])"/> should be used instead of this if possible. This method can block the calling thread! It's lazy; it's initialized only when retrieving. <para/>
-    /// This can still be used with an async initialization func, but it will block on the func.
-    /// </summary>
-    /// <remarks>The initialization func needs to be set before calling this, either in the ctor or via the other methods</remarks>
-    /// <exception cref="ObjectDisposedException"></exception>
-    /// <exception cref="NullReferenceException"></exception>
-    void InitSync(CancellationToken cancellationToken, params object[] objects);
-
     /// <see cref="SetInitialization(Func{object})"/>
     void SetInitialization(Func<CancellationToken, object[], ValueTask<object>> func);
 

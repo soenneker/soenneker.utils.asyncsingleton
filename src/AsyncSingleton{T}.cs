@@ -112,32 +112,32 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         switch (_initializationType)
         {
             case InitializationType.AsyncObject:
-                if (_asyncObjectFunc == null)
+                if (_asyncObjectFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
                 return await _asyncObjectFunc(objects).NoSync();
             case InitializationType.AsyncObjectToken:
-                if (_asyncObjectTokenFunc == null)
+                if (_asyncObjectTokenFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
                 return await _asyncObjectTokenFunc(cancellationToken, objects).NoSync();
             case InitializationType.Async:
-                if (_asyncFunc == null)
+                if (_asyncFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
                 return await _asyncFunc().NoSync();
             case InitializationType.SyncObject:
-                if (_objectFunc == null)
+                if (_objectFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
                 return _objectFunc(objects);
             case InitializationType.SyncObjectToken:
-                if (_objectTokenFunc == null)
+                if (_objectTokenFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
                 return _objectTokenFunc(cancellationToken, objects);
             case InitializationType.Sync:
-                if (_func == null)
+                if (_func is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
                 return _func();
@@ -148,61 +148,56 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
     public T GetSync(params object[] objects)
     {
-        return GetSync(CancellationToken.None, objects);
-    }
-
-    public T GetSync(CancellationToken cancellationToken, params object[] objects)
-    {
         if (_disposed)
             throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
 
         if (_instance is not null)
             return _instance;
 
-        using (_lock.Lock(cancellationToken))
+        using (_lock.Lock())
         {
             if (_instance is not null)
                 return _instance;
 
-            _instance = GetSyncInternal(cancellationToken, objects);
+            _instance = GetSyncInternal(objects);
             return _instance;
         }
     }
 
-    private T GetSyncInternal(CancellationToken cancellationToken, params object[] objects)
+    private T GetSyncInternal(params object[] objects)
     {
         switch (_initializationType)
         {
             case InitializationType.AsyncObject:
-                if (_asyncObjectFunc == null)
+                if (_asyncObjectFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
                 // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
                 return _asyncObjectFunc(objects).NoSync().GetAwaiter().GetResult();
             case InitializationType.AsyncObjectToken:
-                if (_asyncObjectTokenFunc == null)
+                if (_asyncObjectTokenFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
                 // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
-                return _asyncObjectTokenFunc(cancellationToken, objects).NoSync().GetAwaiter().GetResult();
+                return _asyncObjectTokenFunc(CancellationToken.None, objects).NoSync().GetAwaiter().GetResult();
             case InitializationType.Async:
-                if (_asyncFunc == null)
+                if (_asyncFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
                 // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
                 return _asyncFunc().NoSync().GetAwaiter().GetResult();
             case InitializationType.SyncObject:
-                if (_objectFunc == null)
+                if (_objectFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
                 return _objectFunc(objects);
             case InitializationType.SyncObjectToken:
-                if (_objectTokenFunc == null)
+                if (_objectTokenFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
-                return _objectTokenFunc(cancellationToken, objects);
+                return _objectTokenFunc(CancellationToken.None, objects);
             case InitializationType.Sync:
-                if (_func == null)
+                if (_func is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
                 return _func();
@@ -219,7 +214,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         _initializationType = InitializationType.AsyncObject;
         _asyncObjectFunc = func;
     }
-
+        
     public void SetInitialization(Func<CancellationToken, object[], ValueTask<T>> func)
     {
         if (_instance is not null)
@@ -274,7 +269,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
         T? localInstance = _instance;
 
-        if (localInstance == null)
+        if (localInstance is null)
         {
             GC.SuppressFinalize(this);
             return;
@@ -305,7 +300,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
         T? localInstance = _instance;
 
-        if (localInstance == null)
+        if (localInstance is null)
         {
             GC.SuppressFinalize(this);
             return;
