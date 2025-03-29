@@ -152,17 +152,17 @@ public class AsyncSingleton : IAsyncSingleton
                 if (_asyncObjectFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
-                return _asyncObjectFunc(objects).NoSync().GetAwaiter().GetResult();
+                return _asyncObjectFunc(objects).AwaitSync();
             case InitializationType.AsyncObjectToken:
                 if (_asyncObjectTokenFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
-                return _asyncObjectTokenFunc(CancellationToken.None, objects).NoSync().GetAwaiter().GetResult();
+                return _asyncObjectTokenFunc(CancellationToken.None, objects).AwaitSync();
             case InitializationType.Async:
                 if (_asyncFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
-                return _asyncFunc().NoSync().GetAwaiter().GetResult();
+                return _asyncFunc().AwaitSync();
             case InitializationType.SyncObject:
                 if (_objectFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
@@ -257,7 +257,7 @@ public class AsyncSingleton : IAsyncSingleton
             else if (localInstance is IAsyncDisposable asyncDisposable)
             {
                 // Handle async disposal in a synchronous context.
-                asyncDisposable.DisposeAsync().NoSync().GetAwaiter().GetResult();
+                asyncDisposable.DisposeAsync().AwaitSync();
             }
 
             // Clear the instance explicitly to allow for garbage collection.

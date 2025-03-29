@@ -173,19 +173,19 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
                 // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
-                return _asyncObjectFunc(objects).NoSync().GetAwaiter().GetResult();
+                return _asyncObjectFunc(objects).AwaitSync();
             case InitializationType.AsyncObjectToken:
                 if (_asyncObjectTokenFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
                 // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
-                return _asyncObjectTokenFunc(CancellationToken.None, objects).NoSync().GetAwaiter().GetResult();
+                return _asyncObjectTokenFunc(CancellationToken.None, objects).AwaitSync();
             case InitializationType.Async:
                 if (_asyncFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
 
                 // Not a great situation here - we only have async initialization but we're calling this synchronously... so we'll block
-                return _asyncFunc().NoSync().GetAwaiter().GetResult();
+                return _asyncFunc().AwaitSync();
             case InitializationType.SyncObject:
                 if (_objectFunc is null)
                     throw new NullReferenceException(Constants.InitializationFuncError);
@@ -283,7 +283,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         // Handle IAsyncDisposable in a synchronous context
         else if (localInstance is IAsyncDisposable asyncDisposable)
         {
-            asyncDisposable.DisposeAsync().NoSync().GetAwaiter().GetResult();
+            asyncDisposable.DisposeAsync().AwaitSync();
         }
 
         // Clear the instance reference and suppress finalization
