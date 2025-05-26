@@ -1,7 +1,7 @@
 ﻿using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
+using AwesomeAssertions;
 using Xunit;
 
 namespace Soenneker.Utils.AsyncSingleton.Tests;
