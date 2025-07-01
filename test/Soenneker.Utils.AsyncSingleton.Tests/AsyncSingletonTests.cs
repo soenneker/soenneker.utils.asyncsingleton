@@ -35,8 +35,8 @@ public class AsyncSingletonTests
 
         await httpClientSingleton.Init();
 
-        Task t1 = Task.Run(async () => await httpClientSingleton.Init());
-        Task t2 = Task.Run(async () => await httpClientSingleton.Init());
+        Task t1 = Task.Run(async () => await httpClientSingleton.Init(), TestContext.Current.CancellationToken);
+        Task t2 = Task.Run(async () => await httpClientSingleton.Init(), TestContext.Current.CancellationToken);
 
         await Task.WhenAll(t1, t2);
     }
@@ -104,13 +104,17 @@ public class AsyncSingletonTests
     [Fact]
     public async Task Async_with_object_and_cancellationToken_should_not_throw()
     {
-        var httpClientSingleton = new AsyncSingleton(async (token, _) => new object());
+        var httpClientSingleton = new AsyncSingleton(async (token, _) =>
+        {
+            await Task.Delay(100, token);
+            return new object();
+        });
 
         await httpClientSingleton.Init(CancellationToken.None, 3);
     }
 
     [Fact]
-    public async Task Sync_with_object_and_cancellationToken_should_not_throw()
+    public void Sync_with_object_and_cancellationToken_should_not_throw()
     {
         var httpClientSingleton = new AsyncSingleton((token, obj) => new object());
 
@@ -120,10 +124,11 @@ public class AsyncSingletonTests
     [Fact]
     public async Task Async_Get_should_only_initialize_once()
     {
-        int x = 0;
+        var x = 0;
 
         var httpClientSingleton = new AsyncSingleton(async () =>
         {
+            await Task.Delay(100);
             x++;
             return new HttpClient();
         });
@@ -136,7 +141,7 @@ public class AsyncSingletonTests
     [Fact]
     public async Task Sync_Get_Async_should_only_initialize_once()
     {
-        int x = 0;
+        var x = 0;
 
         var httpClientSingleton = new AsyncSingleton(() =>
         {
@@ -153,7 +158,7 @@ public class AsyncSingletonTests
     [Fact]
     public void Sync_Get_Sync_should_only_initialize_once()
     {
-        int x = 0;
+        var x = 0;
 
         var httpClientSingleton = new AsyncSingleton(() =>
         {

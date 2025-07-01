@@ -113,13 +113,13 @@ public class AsyncSingletonTTests
     [Fact]
     public async Task Async_with_object_and_cancellationToken_should_not_throw()
     {
-        var httpClientSingleton = new AsyncSingleton<object>(async (token, obj) => new object());
+        var httpClientSingleton = new AsyncSingleton<object>(async (token, obj) => { await Task.Delay(100, token); return new object(); });
 
         _ = await httpClientSingleton.Get(CancellationToken.None, 3);
     }
 
     [Fact]
-    public async Task Sync_with_object_and_cancellationToken_should_not_throw()
+    public void Sync_with_object_and_cancellationToken_should_not_throw()
     {
         var httpClientSingleton = new AsyncSingleton<object>((token, obj) => new object());
 
@@ -129,10 +129,11 @@ public class AsyncSingletonTTests
     [Fact]
     public async Task Async_Get_should_only_initialize_once()
     {
-        int x = 0;
+        var x = 0;
 
         var httpClientSingleton = new AsyncSingleton<HttpClient>(async () =>
         {
+            await Task.Delay(100);
             x++;
             return new HttpClient();
         });
@@ -146,7 +147,7 @@ public class AsyncSingletonTTests
     [Fact]
     public async Task Sync_Get_Async_should_only_initialize_once()
     {
-        int x = 0;
+        var x = 0;
 
         var httpClientSingleton = new AsyncSingleton<HttpClient>(() =>
         {
@@ -163,7 +164,7 @@ public class AsyncSingletonTTests
     [Fact]
     public void Sync_Get_Sync_should_only_initialize_once()
     {
-        int x = 0;
+        var x = 0;
 
         var httpClientSingleton = new AsyncSingleton<HttpClient>(() =>
         {

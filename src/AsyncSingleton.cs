@@ -9,7 +9,7 @@ using Soenneker.Utils.AsyncSingleton.Enums;
 namespace Soenneker.Utils.AsyncSingleton;
 
 ///<inheritdoc cref="IAsyncSingleton"/>
-public class AsyncSingleton : IAsyncSingleton
+public sealed class AsyncSingleton : IAsyncSingleton
 {
     private object? _instance;
     private readonly AsyncLock _lock = new();
@@ -263,8 +263,6 @@ public class AsyncSingleton : IAsyncSingleton
             // Clear the instance explicitly to allow for garbage collection.
             _instance = null;
         }
-
-        GC.SuppressFinalize(this);
     }
 
     public async ValueTask DisposeAsync()
@@ -278,7 +276,6 @@ public class AsyncSingleton : IAsyncSingleton
 
         if (localInstance is null)
         {
-            GC.SuppressFinalize(this);
             return;
         }
 
@@ -295,7 +292,5 @@ public class AsyncSingleton : IAsyncSingleton
 
         // Clear the instance reference explicitly to assist GC
         _instance = null;
-
-        GC.SuppressFinalize(this);
     }
 }
