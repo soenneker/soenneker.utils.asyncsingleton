@@ -38,6 +38,6 @@
         <None Include="..\icon.png" Pack="true" PackagePath="\" />
 
         <PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
-        <PackageReference Include="Soenneker.Extensions.ValueTask" Version="3.0.94" />
+        <PackageReference Include="Soenneker.Extensions.ValueTask" Version="3.0.95" />
     </ItemGroup>
 </Project>
