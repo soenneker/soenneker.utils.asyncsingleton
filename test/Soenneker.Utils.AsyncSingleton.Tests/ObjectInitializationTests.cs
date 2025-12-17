@@ -18,7 +18,7 @@ public class ObjectInitializationTests
             return new HttpClient();
         });
 
-        var cancellationToken = new CancellationToken();
+        CancellationToken cancellationToken = CancellationToken.None;
         HttpClient result = await httpClientSingleton.Get(cancellationToken, cancellationToken);
         result.Should().NotBeNull();
     }

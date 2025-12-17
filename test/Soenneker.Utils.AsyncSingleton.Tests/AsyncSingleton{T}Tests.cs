@@ -123,7 +123,7 @@ public class AsyncSingletonTTests
     {
         var httpClientSingleton = new AsyncSingleton<object>((token, obj) => new object());
 
-        var httpClient = httpClientSingleton.GetSync(CancellationToken.None, 3);
+        object httpClient = httpClientSingleton.GetSync(CancellationToken.None, 3);
     }
 
     [Fact]
