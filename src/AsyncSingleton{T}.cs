@@ -1,18 +1,23 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Nito.AsyncEx;
+﻿using Nito.AsyncEx;
+using Soenneker.Atomics.Bools;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.AsyncSingleton.Abstract;
 using Soenneker.Utils.AsyncSingleton.Enums;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Soenneker.Utils.AsyncSingleton;
 
-///<inheritdoc cref="IAsyncSingleton{T}"/>
+/// <inheritdoc cref="IAsyncSingleton{T}"/>
 // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
-public class AsyncSingleton<T> : IAsyncSingleton<T> where T : class
+public class AsyncSingleton<T> : IAsyncSingleton<T>
 {
-    private T? _instance;
+    // Boxed for value types; reference types are stored directly.
+    private object? _instance;
+
+    private AtomicBool _hasValue;
+
     private readonly AsyncLock _lock = new();
 
     private Func<ValueTask<T>>? _asyncFunc;
@@ -74,25 +79,26 @@ public class AsyncSingleton<T> : IAsyncSingleton<T> where T : class
         if (_disposed)
             throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
 
-        T? inst = Volatile.Read(ref _instance);
-        if (inst is not null)
-            return new ValueTask<T>(inst);
+        // Fast path (no lock)
+        if (_hasValue.Value)
+            return new ValueTask<T>((T)Volatile.Read(ref _instance)!);
 
         return GetSlow(cancellationToken, objects);
 
         async ValueTask<T> GetSlow(CancellationToken ct, object[] args)
         {
-            using (await _lock.LockAsync(ct)
-                              .ConfigureAwait(false))
+            using (await _lock.LockAsync(ct).ConfigureAwait(false))
             {
-                inst = Volatile.Read(ref _instance);
-                if (inst is not null)
-                    return inst;
+                if (_hasValue.Value)
+                    return (T)Volatile.Read(ref _instance)!;
 
-                inst = await GetInternal(ct, args)
-                    .NoSync();
-                Volatile.Write(ref _instance, inst);
-                return inst;
+                T created = await GetInternal(ct, args).NoSync();
+
+                // Publish instance first, then publish the flag (release)
+                Volatile.Write(ref _instance, created!);
+                _hasValue.Value = true;
+
+                return created;
             }
         }
     }
@@ -104,23 +110,22 @@ public class AsyncSingleton<T> : IAsyncSingleton<T> where T : class
             case InitializationType.AsyncObject:
                 return _asyncObjectFunc is null
                     ? throw new NullReferenceException(Constants.InitializationFuncError)
-                    : await _asyncObjectFunc(objects)
-                        .NoSync();
+                    : await _asyncObjectFunc(objects).NoSync();
 
             case InitializationType.AsyncObjectToken:
                 return _asyncObjectTokenFunc is null
                     ? throw new NullReferenceException(Constants.InitializationFuncError)
-                    : await _asyncObjectTokenFunc(cancellationToken, objects)
-                        .NoSync();
+                    : await _asyncObjectTokenFunc(cancellationToken, objects).NoSync();
 
             case InitializationType.Async:
                 return _asyncFunc is null
                     ? throw new NullReferenceException(Constants.InitializationFuncError)
-                    : await _asyncFunc()
-                        .NoSync();
+                    : await _asyncFunc().NoSync();
 
             case InitializationType.SyncObject:
-                return _objectFunc is null ? throw new NullReferenceException(Constants.InitializationFuncError) : _objectFunc(objects);
+                return _objectFunc is null
+                    ? throw new NullReferenceException(Constants.InitializationFuncError)
+                    : _objectFunc(objects);
 
             case InitializationType.SyncObjectToken:
                 return _objectTokenFunc is null
@@ -128,7 +133,9 @@ public class AsyncSingleton<T> : IAsyncSingleton<T> where T : class
                     : _objectTokenFunc(cancellationToken, objects);
 
             case InitializationType.Sync:
-                return _func is null ? throw new NullReferenceException(Constants.InitializationFuncError) : _func();
+                return _func is null
+                    ? throw new NullReferenceException(Constants.InitializationFuncError)
+                    : _func();
 
             default:
                 throw new ArgumentOutOfRangeException();
@@ -140,19 +147,20 @@ public class AsyncSingleton<T> : IAsyncSingleton<T> where T : class
         if (_disposed)
             throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
 
-        T? inst = Volatile.Read(ref _instance);
-        if (inst is not null)
-            return inst;
+        if (_hasValue.Value)
+            return (T)Volatile.Read(ref _instance)!;
 
         using (_lock.Lock())
         {
-            inst = Volatile.Read(ref _instance);
-            if (inst is not null)
-                return inst;
+            if (_hasValue.Value)
+                return (T)Volatile.Read(ref _instance)!;
 
-            inst = GetSyncInternal(objects);
-            Volatile.Write(ref _instance, inst);
-            return inst;
+            T created = GetSyncInternal(objects);
+
+            Volatile.Write(ref _instance, created!);
+            _hasValue.Value = true;
+
+            return created;
         }
     }
 
@@ -163,23 +171,22 @@ public class AsyncSingleton<T> : IAsyncSingleton<T> where T : class
             case InitializationType.AsyncObject:
                 return _asyncObjectFunc is null
                     ? throw new NullReferenceException(Constants.InitializationFuncError)
-                    : _asyncObjectFunc(objects)
-                        .AwaitSync();
+                    : _asyncObjectFunc(objects).AwaitSync();
 
             case InitializationType.AsyncObjectToken:
                 return _asyncObjectTokenFunc is null
                     ? throw new NullReferenceException(Constants.InitializationFuncError)
-                    : _asyncObjectTokenFunc(CancellationToken.None, objects)
-                        .AwaitSync();
+                    : _asyncObjectTokenFunc(CancellationToken.None, objects).AwaitSync();
 
             case InitializationType.Async:
                 return _asyncFunc is null
                     ? throw new NullReferenceException(Constants.InitializationFuncError)
-                    : _asyncFunc()
-                        .AwaitSync();
+                    : _asyncFunc().AwaitSync();
 
             case InitializationType.SyncObject:
-                return _objectFunc is null ? throw new NullReferenceException(Constants.InitializationFuncError) : _objectFunc(objects);
+                return _objectFunc is null
+                    ? throw new NullReferenceException(Constants.InitializationFuncError)
+                    : _objectFunc(objects);
 
             case InitializationType.SyncObjectToken:
                 return _objectTokenFunc is null
@@ -187,7 +194,9 @@ public class AsyncSingleton<T> : IAsyncSingleton<T> where T : class
                     : _objectTokenFunc(CancellationToken.None, objects);
 
             case InitializationType.Sync:
-                return _func is null ? throw new NullReferenceException(Constants.InitializationFuncError) : _func();
+                return _func is null
+                    ? throw new NullReferenceException(Constants.InitializationFuncError)
+                    : _func();
 
             default:
                 throw new ArgumentOutOfRangeException();
@@ -196,7 +205,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T> where T : class
 
     public void SetInitialization(Func<object[], ValueTask<T>> func)
     {
-        if (_instance is not null)
+        if (_hasValue.Value)
             throw new Exception("Setting the initialization of an AsyncSingleton after it's already has been set is not allowed");
 
         _initializationType = InitializationType.AsyncObject;
@@ -205,7 +214,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T> where T : class
 
     public void SetInitialization(Func<CancellationToken, object[], ValueTask<T>> func)
     {
-        if (_instance is not null)
+        if (_hasValue.Value)
             throw new Exception("Setting the initialization of an AsyncSingleton after it's already has been set is not allowed");
 
         _initializationType = InitializationType.AsyncObjectToken;
@@ -214,7 +223,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T> where T : class
 
     public void SetInitialization(Func<ValueTask<T>> func)
     {
-        if (_instance is not null)
+        if (_hasValue.Value)
             throw new Exception("Setting the initialization of an AsyncSingleton after it's already has been set is not allowed");
 
         _initializationType = InitializationType.Async;
@@ -223,7 +232,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T> where T : class
 
     public void SetInitialization(Func<object[], T> func)
     {
-        if (_instance is not null)
+        if (_hasValue.Value)
             throw new Exception("Setting the initialization of an AsyncSingleton after it's already has been set is not allowed");
 
         _initializationType = InitializationType.SyncObject;
@@ -232,7 +241,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T> where T : class
 
     public void SetInitialization(Func<CancellationToken, object[], T> func)
     {
-        if (_instance is not null)
+        if (_hasValue.Value)
             throw new Exception("Setting the initialization of an AsyncSingleton after it's already has been set is not allowed");
 
         _initializationType = InitializationType.SyncObjectToken;
@@ -241,7 +250,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T> where T : class
 
     public void SetInitialization(Func<T> func)
     {
-        if (_instance is not null)
+        if (_hasValue.Value)
             throw new Exception("Setting the initialization of an AsyncSingleton after it's already has been set is not allowed");
 
         _initializationType = InitializationType.Sync;
@@ -255,28 +264,25 @@ public class AsyncSingleton<T> : IAsyncSingleton<T> where T : class
 
         _disposed = true;
 
-        T? localInstance = _instance;
-
-        if (localInstance is null)
+        if (!_hasValue.Value)
         {
             GC.SuppressFinalize(this);
             return;
         }
 
-        // Handle IDisposable cleanup
-        if (localInstance is IDisposable disposable)
+        object? local = Volatile.Read(ref _instance);
+
+        if (local is IDisposable disposable)
         {
             disposable.Dispose();
         }
-        // Handle IAsyncDisposable in a synchronous context
-        else if (localInstance is IAsyncDisposable asyncDisposable)
+        else if (local is IAsyncDisposable asyncDisposable)
         {
-            asyncDisposable.DisposeAsync()
-                           .AwaitSync();
+            asyncDisposable.DisposeAsync().AwaitSync();
         }
 
-        // Clear the instance reference and suppress finalization
-        _instance = null;
+        Volatile.Write(ref _instance, null);
+        _hasValue.Value = false;
         GC.SuppressFinalize(this);
     }
 
@@ -287,28 +293,25 @@ public class AsyncSingleton<T> : IAsyncSingleton<T> where T : class
 
         _disposed = true;
 
-        T? localInstance = _instance;
-
-        if (localInstance is null)
+        if (!_hasValue.Value)
         {
             GC.SuppressFinalize(this);
             return;
         }
 
-        // Handle IAsyncDisposable cleanup
-        if (localInstance is IAsyncDisposable asyncDisposable)
+        object? local = Volatile.Read(ref _instance);
+
+        if (local is IAsyncDisposable asyncDisposable)
         {
-            await asyncDisposable.DisposeAsync()
-                                 .NoSync();
+            await asyncDisposable.DisposeAsync().NoSync();
         }
-        // Handle IDisposable in an asynchronous context
-        else if (localInstance is IDisposable disposable)
+        else if (local is IDisposable disposable)
         {
             disposable.Dispose();
         }
 
-        // Clear the instance reference and suppress finalization
-        _instance = null;
+        Volatile.Write(ref _instance, null);
+        _hasValue.Value = false;
         GC.SuppressFinalize(this);
     }
 }

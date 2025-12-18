@@ -9,7 +9,7 @@ namespace Soenneker.Utils.AsyncSingleton.Abstract;
 /// An externally initializing singleton that uses double-check asynchronous locking, with optional async and sync disposal
 /// </summary>
 /// <remarks>Be sure to dispose of this gracefully if using a Disposable type</remarks>
-public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable where T : class
+public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
 {
     /// <summary>
     /// Utilizes double-check async locking to guarantee there's only one instance of the object. It's lazy; it's initialized only when retrieving. <para/>
