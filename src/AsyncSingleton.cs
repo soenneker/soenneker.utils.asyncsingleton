@@ -1,10 +1,11 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Nito.AsyncEx;
+﻿using Nito.AsyncEx;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.AsyncSingleton.Abstract;
+using Soenneker.Utils.AsyncSingleton.Constants;
 using Soenneker.Utils.AsyncSingleton.Enums;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Soenneker.Utils.AsyncSingleton;
 
@@ -102,40 +103,40 @@ public sealed class AsyncSingleton : IAsyncSingleton
         {
             case InitializationType.AsyncObject:
                 if (_asyncObjectFunc is null)
-                    throw new NullReferenceException(Constants.InitializationFuncError);
+                    throw new NullReferenceException(AsyncSingletonConstants.InitializationFuncError);
 
                 return await _asyncObjectFunc(objects)
                     .NoSync();
 
             case InitializationType.AsyncObjectToken:
                 if (_asyncObjectTokenFunc is null)
-                    throw new NullReferenceException(Constants.InitializationFuncError);
+                    throw new NullReferenceException(AsyncSingletonConstants.InitializationFuncError);
 
                 return await _asyncObjectTokenFunc(cancellationToken, objects)
                     .NoSync();
 
             case InitializationType.Async:
                 if (_asyncFunc is null)
-                    throw new NullReferenceException(Constants.InitializationFuncError);
+                    throw new NullReferenceException(AsyncSingletonConstants.InitializationFuncError);
 
                 return await _asyncFunc()
                     .NoSync();
 
             case InitializationType.SyncObject:
                 if (_objectFunc is null)
-                    throw new NullReferenceException(Constants.InitializationFuncError);
+                    throw new NullReferenceException(AsyncSingletonConstants.InitializationFuncError);
 
                 return _objectFunc(objects);
 
             case InitializationType.SyncObjectToken:
                 if (_objectTokenFunc is null)
-                    throw new NullReferenceException(Constants.InitializationFuncError);
+                    throw new NullReferenceException(AsyncSingletonConstants.InitializationFuncError);
 
                 return _objectTokenFunc(cancellationToken, objects);
 
             case InitializationType.Sync:
                 if (_func is null)
-                    throw new NullReferenceException(Constants.InitializationFuncError);
+                    throw new NullReferenceException(AsyncSingletonConstants.InitializationFuncError);
 
                 return _func();
 
@@ -168,35 +169,35 @@ public sealed class AsyncSingleton : IAsyncSingleton
         {
             case InitializationType.AsyncObject:
                 if (_asyncObjectFunc is null)
-                    throw new NullReferenceException(Constants.InitializationFuncError);
+                    throw new NullReferenceException(AsyncSingletonConstants.InitializationFuncError);
                 return _asyncObjectFunc(objects)
                     .AwaitSync();
 
             case InitializationType.AsyncObjectToken:
                 if (_asyncObjectTokenFunc is null)
-                    throw new NullReferenceException(Constants.InitializationFuncError);
+                    throw new NullReferenceException(AsyncSingletonConstants.InitializationFuncError);
                 return _asyncObjectTokenFunc(CancellationToken.None, objects)
                     .AwaitSync();
 
             case InitializationType.Async:
                 if (_asyncFunc is null)
-                    throw new NullReferenceException(Constants.InitializationFuncError);
+                    throw new NullReferenceException(AsyncSingletonConstants.InitializationFuncError);
                 return _asyncFunc()
                     .AwaitSync();
 
             case InitializationType.SyncObject:
                 if (_objectFunc is null)
-                    throw new NullReferenceException(Constants.InitializationFuncError);
+                    throw new NullReferenceException(AsyncSingletonConstants.InitializationFuncError);
                 return _objectFunc(objects);
 
             case InitializationType.SyncObjectToken:
                 if (_objectTokenFunc is null)
-                    throw new NullReferenceException(Constants.InitializationFuncError);
+                    throw new NullReferenceException(AsyncSingletonConstants.InitializationFuncError);
                 return _objectTokenFunc(CancellationToken.None, objects);
 
             case InitializationType.Sync:
                 if (_func is null)
-                    throw new NullReferenceException(Constants.InitializationFuncError);
+                    throw new NullReferenceException(AsyncSingletonConstants.InitializationFuncError);
                 return _func();
 
             default:
