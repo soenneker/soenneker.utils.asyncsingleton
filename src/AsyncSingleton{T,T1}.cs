@@ -8,61 +8,61 @@ using System.Threading.Tasks;
 
 namespace Soenneker.Utils.AsyncSingleton;
 
-/// <inheritdoc cref="IAsyncSingleton{T}"/>
-// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
-public class AsyncSingleton<T> : IAsyncSingleton<T>
+/// <summary>
+/// Async-safe, allocation-free singleton initialized with one argument.
+/// The first successful initialization wins; subsequent calls ignore arguments.
+/// </summary>
+public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
 {
-    // Boxed for value types; reference types are stored directly.
-    private object? _instance;
+    private T? _instance;
 
     private ValueAtomicBool _hasValue;
     private ValueAtomicBool _disposed;
 
     private readonly AsyncLock _lock = new();
 
-    private readonly Func<ValueTask<T>>? _asyncFactory;
-    private readonly Func<CancellationToken, ValueTask<T>>? _asyncFactoryToken;
+    private readonly Func<T1, ValueTask<T>>? _asyncFactory;
+    private readonly Func<CancellationToken, T1, ValueTask<T>>? _asyncFactoryToken;
 
-    private readonly Func<T>? _syncFactory;
-    private readonly Func<CancellationToken, T>? _syncFactoryToken;
+    private readonly Func<T1, T>? _syncFactory;
+    private readonly Func<CancellationToken, T1, T>? _syncFactoryToken;
 
-    public AsyncSingleton(Func<ValueTask<T>> factory)
+    public AsyncSingleton(Func<T1, ValueTask<T>> factory)
         => _asyncFactory = factory ?? throw new ArgumentNullException(nameof(factory));
 
-    public AsyncSingleton(Func<CancellationToken, ValueTask<T>> factory)
+    public AsyncSingleton(Func<CancellationToken, T1, ValueTask<T>> factory)
         => _asyncFactoryToken = factory ?? throw new ArgumentNullException(nameof(factory));
 
-    public AsyncSingleton(Func<T> factory)
+    public AsyncSingleton(Func<T1, T> factory)
         => _syncFactory = factory ?? throw new ArgumentNullException(nameof(factory));
 
-    public AsyncSingleton(Func<CancellationToken, T> factory)
+    public AsyncSingleton(Func<CancellationToken, T1, T> factory)
         => _syncFactoryToken = factory ?? throw new ArgumentNullException(nameof(factory));
 
-    public ValueTask<T> Get(CancellationToken cancellationToken = default)
-        => GetOrCreate(cancellationToken);
+    public ValueTask<T> Get(T1 arg, CancellationToken cancellationToken = default)
+        => GetOrCreate(cancellationToken, arg);
 
-    public virtual ValueTask<T> GetOrCreate(CancellationToken cancellationToken = default)
+    private ValueTask<T> GetOrCreate(CancellationToken ct, T1 arg)
     {
         if (_disposed.Value)
-            throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
+            throw new ObjectDisposedException(typeof(AsyncSingleton<T, T1>).Name);
 
-        // Fast path (no lock)
         if (_hasValue.Value)
-            return new ValueTask<T>((T)_instance!);
+            return new ValueTask<T>(_instance!);
 
-        return Slow(cancellationToken);
+        return Slow(ct, arg);
 
-        async ValueTask<T> Slow(CancellationToken ct)
+        async ValueTask<T> Slow(CancellationToken token, T1 a)
         {
-            using (await _lock.LockAsync(ct).ConfigureAwait(false))
+            using (await _lock.LockAsync(token).ConfigureAwait(false))
             {
                 if (_disposed.Value)
-                    throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
+                    throw new ObjectDisposedException(typeof(AsyncSingleton<T, T1>).Name);
 
                 if (_hasValue.Value)
-                    return (T)_instance!;
+                    return _instance!;
 
-                T created = await Create(ct).NoSync();
+                T created = await Create(token, a).NoSync();
 
                 _instance = created!;
                 _hasValue.Value = true;
@@ -72,23 +72,23 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         }
     }
 
-    public T GetSync(CancellationToken cancellationToken = default)
+    public T GetSync(T1 arg, CancellationToken cancellationToken = default)
     {
         if (_disposed.Value)
-            throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
+            throw new ObjectDisposedException(typeof(AsyncSingleton<T, T1>).Name);
 
         if (_hasValue.Value)
-            return (T)_instance!;
+            return _instance!;
 
         using (_lock.Lock())
         {
             if (_disposed.Value)
-                throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
+                throw new ObjectDisposedException(typeof(AsyncSingleton<T, T1>).Name);
 
             if (_hasValue.Value)
-                return (T)_instance!;
+                return _instance!;
 
-            T created = CreateSync(cancellationToken);
+            T created = CreateSync(cancellationToken, arg);
 
             _instance = created!;
             _hasValue.Value = true;
@@ -97,36 +97,36 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         }
     }
 
-    private ValueTask<T> Create(CancellationToken ct)
+    private ValueTask<T> Create(CancellationToken ct, T1 arg)
     {
         if (_asyncFactoryToken is not null)
-            return _asyncFactoryToken(ct);
+            return _asyncFactoryToken(ct, arg);
 
         if (_asyncFactory is not null)
-            return _asyncFactory();
+            return _asyncFactory(arg);
 
         if (_syncFactoryToken is not null)
-            return new ValueTask<T>(_syncFactoryToken(ct));
+            return new ValueTask<T>(_syncFactoryToken(ct, arg));
 
         if (_syncFactory is not null)
-            return new ValueTask<T>(_syncFactory());
+            return new ValueTask<T>(_syncFactory(arg));
 
         throw new InvalidOperationException("No initialization factory was configured.");
     }
 
-    private T CreateSync(CancellationToken ct)
+    private T CreateSync(CancellationToken ct, T1 arg)
     {
         if (_syncFactoryToken is not null)
-            return _syncFactoryToken(ct);
+            return _syncFactoryToken(ct, arg);
 
         if (_syncFactory is not null)
-            return _syncFactory();
+            return _syncFactory(arg);
 
         if (_asyncFactoryToken is not null)
-            return _asyncFactoryToken(ct).AwaitSync();
+            return _asyncFactoryToken(ct, arg).AwaitSync();
 
         if (_asyncFactory is not null)
-            return _asyncFactory().AwaitSync();
+            return _asyncFactory(arg).AwaitSync();
 
         throw new InvalidOperationException("No initialization factory was configured.");
     }
@@ -142,10 +142,9 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         {
             _hasValue.Value = false;
             local = _instance;
-            _instance = null;
+            _instance = default;
         }
 
-        // Prefer async disposal if supported (even in sync Dispose).
         if (local is IAsyncDisposable ad)
             ad.DisposeAsync().AwaitSync();
         else if (local is IDisposable d)
@@ -165,7 +164,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         {
             _hasValue.Value = false;
             local = _instance;
-            _instance = null;
+            _instance = default;
         }
 
         if (local is IAsyncDisposable ad)

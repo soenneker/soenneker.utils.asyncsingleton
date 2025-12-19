@@ -14,7 +14,8 @@ public class AsyncSingletonTTests
     {
         var httpClientSingleton = new AsyncSingleton<HttpClient>(() => new HttpClient());
         HttpClient result = await httpClientSingleton.Get();
-        result.Should().NotBeNull();
+        result.Should()
+              .NotBeNull();
     }
 
     [Fact]
@@ -27,27 +28,31 @@ public class AsyncSingletonTTests
         });
 
         HttpClient result = await httpClientSingleton.Get();
-        result.Should().NotBeNull();
+        result.Should()
+              .NotBeNull();
     }
 
     [Fact]
     public async Task Get_in_parallel_should_return_both_instances()
     {
         var httpClientSingleton = new AsyncSingleton<HttpClient>(() => new HttpClient());
-        
+
         HttpClient? client1 = null;
         HttpClient? client2 = null;
 
         HttpClient result = await httpClientSingleton.Get();
-        result.Should().NotBeNull();
+        result.Should()
+              .NotBeNull();
 
         Task t1 = Task.Run(async () => client1 = await httpClientSingleton.Get());
         Task t2 = Task.Run(async () => client2 = await httpClientSingleton.Get());
 
         await Task.WhenAll(t1, t2);
 
-        client1.Should().NotBeNull();
-        client2.Should().NotBeNull();
+        client1.Should()
+               .NotBeNull();
+        client2.Should()
+               .NotBeNull();
     }
 
     [Fact]
@@ -61,7 +66,8 @@ public class AsyncSingletonTTests
 
         Func<Task> act = async () => _ = await httpClientSingleton.Get();
 
-        await act.Should().ThrowAsync<ObjectDisposedException>();
+        await act.Should()
+                 .ThrowAsync<ObjectDisposedException>();
     }
 
     [Fact]
@@ -76,7 +82,8 @@ public class AsyncSingletonTTests
 
         Action act = () => _ = httpClientSingleton.GetSync();
 
-        act.Should().Throw<ObjectDisposedException>();
+        act.Should()
+           .Throw<ObjectDisposedException>();
     }
 
     [Fact]
@@ -113,17 +120,21 @@ public class AsyncSingletonTTests
     [Fact]
     public async Task Async_with_object_and_cancellationToken_should_not_throw()
     {
-        var httpClientSingleton = new AsyncSingleton<object>(async (token, obj) => { await Task.Delay(100, token); return new object(); });
+        var httpClientSingleton = new AsyncSingleton<object, int>(async (token, _) =>
+        {
+            await Task.Delay(100, token);
+            return new object();
+        });
 
-        _ = await httpClientSingleton.Get(CancellationToken.None, 3);
+        _ = await httpClientSingleton.Get(3, CancellationToken.None);
     }
 
     [Fact]
     public void Sync_with_object_and_cancellationToken_should_not_throw()
     {
-        var httpClientSingleton = new AsyncSingleton<object>((token, obj) => new object());
+        var httpClientSingleton = new AsyncSingleton<object, int>(_ => new object());
 
-        object httpClient = httpClientSingleton.GetSync(CancellationToken.None, 3);
+        object httpClient = httpClientSingleton.GetSync(3, CancellationToken.None);
     }
 
     [Fact]
@@ -141,7 +152,8 @@ public class AsyncSingletonTTests
         HttpClient result = await httpClientSingleton.Get();
         result = await httpClientSingleton.Get();
 
-        x.Should().Be(1);
+        x.Should()
+         .Be(1);
     }
 
     [Fact]
@@ -158,7 +170,8 @@ public class AsyncSingletonTTests
         HttpClient result = await httpClientSingleton.Get();
         result = await httpClientSingleton.Get();
 
-        x.Should().Be(1);
+        x.Should()
+         .Be(1);
     }
 
     [Fact]
@@ -175,6 +188,7 @@ public class AsyncSingletonTTests
         HttpClient result = httpClientSingleton.GetSync();
         result = httpClientSingleton.GetSync();
 
-        x.Should().Be(1);
+        x.Should()
+         .Be(1);
     }
 }

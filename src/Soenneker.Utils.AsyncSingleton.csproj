@@ -46,7 +46,7 @@
 
     <ItemGroup>
         <PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
-        <PackageReference Include="Soenneker.Atomics.Bools" Version="4.0.5" />
+        <PackageReference Include="Soenneker.Atomics.ValueBools" Version="4.0.2" />
         <PackageReference Include="Soenneker.Extensions.ValueTask" Version="4.0.97" />
     </ItemGroup>
 </Project>

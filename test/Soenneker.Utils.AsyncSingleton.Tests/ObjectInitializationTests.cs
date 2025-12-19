@@ -13,13 +13,11 @@ public class ObjectInitializationTests
     {
         var httpClientSingleton = new AsyncSingleton<HttpClient>(objects =>
         {
-            var cancellationToken = (CancellationToken) objects[0];
-
             return new HttpClient();
         });
 
         CancellationToken cancellationToken = CancellationToken.None;
-        HttpClient result = await httpClientSingleton.Get(cancellationToken, cancellationToken);
+        HttpClient result = await httpClientSingleton.Get(cancellationToken);
         result.Should().NotBeNull();
     }
 }
