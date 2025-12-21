@@ -1,10 +1,10 @@
-﻿using Nito.AsyncEx;
-using Soenneker.Atomics.ValueBools;
+﻿using Soenneker.Atomics.ValueBools;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.AsyncSingleton.Abstract;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Soenneker.Asyncs.Locks;
 
 namespace Soenneker.Utils.AsyncSingleton;
 
@@ -54,7 +54,7 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
 
         async ValueTask<T> Slow(CancellationToken token, T1 a)
         {
-            using (await _lock.LockAsync(token).ConfigureAwait(false))
+            using (await _lock.Lock(token).NoSync())
             {
                 if (_disposed.Value)
                     throw new ObjectDisposedException(typeof(AsyncSingleton<T, T1>).Name);
@@ -80,7 +80,7 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
         if (_hasValue.Value)
             return _instance!;
 
-        using (_lock.Lock())
+        using (_lock.LockSync())
         {
             if (_disposed.Value)
                 throw new ObjectDisposedException(typeof(AsyncSingleton<T, T1>).Name);
@@ -138,7 +138,7 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
 
         object? local;
 
-        using (_lock.Lock())
+        using (_lock.LockSync())
         {
             _hasValue.Value = false;
             local = _instance;
@@ -160,7 +160,7 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
 
         object? local;
 
-        using (await _lock.LockAsync().ConfigureAwait(false))
+        using (await _lock.Lock().NoSync())
         {
             _hasValue.Value = false;
             local = _instance;
