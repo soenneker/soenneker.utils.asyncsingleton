@@ -57,9 +57,9 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         return Slow(cancellationToken);
     }
 
-    private async ValueTask<T> Slow(CancellationToken ct)
+    private async ValueTask<T> Slow(CancellationToken cancellationToken)
     {
-        using (await _lock.Lock(ct)
+        using (await _lock.Lock(cancellationToken)
                           .NoSync())
         {
             if (_disposed.Value)
@@ -68,7 +68,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
             if (_hasValue.Value)
                 return (T)_instance!;
 
-            T created = await Create(ct)
+            T created = await Create(cancellationToken)
                 .NoSync();
 
             _instance = created!;
@@ -103,19 +103,19 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         }
     }
 
-    private ValueTask<T> Create(CancellationToken ct)
+    private ValueTask<T> Create(CancellationToken cancellationToken)
     {
         if (_asyncFactoryTokenState is not null)
-            return _asyncFactoryTokenState(_state!, ct);
+            return _asyncFactoryTokenState(_state!, cancellationToken);
 
         if (_asyncFactoryToken is not null)
-            return _asyncFactoryToken(ct);
+            return _asyncFactoryToken(cancellationToken);
 
         if (_asyncFactory is not null)
             return _asyncFactory();
 
         if (_syncFactoryToken is not null)
-            return new ValueTask<T>(_syncFactoryToken(ct));
+            return new ValueTask<T>(_syncFactoryToken(cancellationToken));
 
         if (_syncFactory is not null)
             return new ValueTask<T>(_syncFactory());
@@ -123,19 +123,19 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         throw new InvalidOperationException("No initialization factory was configured.");
     }
 
-    private T CreateSync(CancellationToken ct)
+    private T CreateSync(CancellationToken cancellationToken)
     {
         if (_asyncFactoryTokenState is not null)
-            return _asyncFactoryTokenState(_state!, ct).AwaitSync();
+            return _asyncFactoryTokenState(_state!, cancellationToken).AwaitSync();
 
         if (_syncFactoryToken is not null)
-            return _syncFactoryToken(ct);
+            return _syncFactoryToken(cancellationToken);
 
         if (_syncFactory is not null)
             return _syncFactory();
 
         if (_asyncFactoryToken is not null)
-            return _asyncFactoryToken(ct)
+            return _asyncFactoryToken(cancellationToken)
                 .AwaitSync();
 
         if (_asyncFactory is not null)

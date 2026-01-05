@@ -38,7 +38,7 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
 
     public ValueTask<T> Get(T1 arg, CancellationToken cancellationToken = default) => GetOrCreate(cancellationToken, arg);
 
-    private ValueTask<T> GetOrCreate(CancellationToken ct, T1 arg)
+    private ValueTask<T> GetOrCreate(CancellationToken cancellationToken, T1 arg)
     {
         if (_disposed.Value)
             throw new ObjectDisposedException(typeof(AsyncSingleton<T, T1>).Name);
@@ -46,12 +46,12 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
         if (_hasValue.Value)
             return new ValueTask<T>(_instance!);
 
-        return Slow(ct, arg);
+        return Slow(cancellationToken, arg);
     }
 
-    private async ValueTask<T> Slow(CancellationToken token, T1 a)
+    private async ValueTask<T> Slow(CancellationToken cancellationToken, T1 a)
     {
-        using (await _lock.Lock(token)
+        using (await _lock.Lock(cancellationToken)
                           .NoSync())
         {
             if (_disposed.Value)
@@ -60,7 +60,7 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
             if (_hasValue.Value)
                 return _instance!;
 
-            T created = await Create(token, a)
+            T created = await Create(cancellationToken, a)
                 .NoSync();
 
             _instance = created!;
@@ -95,16 +95,16 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
         }
     }
 
-    private ValueTask<T> Create(CancellationToken ct, T1 arg)
+    private ValueTask<T> Create(CancellationToken cancellationToken, T1 arg)
     {
         if (_asyncFactoryToken is not null)
-            return _asyncFactoryToken(ct, arg);
+            return _asyncFactoryToken(cancellationToken, arg);
 
         if (_asyncFactory is not null)
             return _asyncFactory(arg);
 
         if (_syncFactoryToken is not null)
-            return new ValueTask<T>(_syncFactoryToken(ct, arg));
+            return new ValueTask<T>(_syncFactoryToken(cancellationToken, arg));
 
         if (_syncFactory is not null)
             return new ValueTask<T>(_syncFactory(arg));
@@ -112,16 +112,16 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
         throw new InvalidOperationException("No initialization factory was configured.");
     }
 
-    private T CreateSync(CancellationToken ct, T1 arg)
+    private T CreateSync(CancellationToken cancellationToken, T1 arg)
     {
         if (_syncFactoryToken is not null)
-            return _syncFactoryToken(ct, arg);
+            return _syncFactoryToken(cancellationToken, arg);
 
         if (_syncFactory is not null)
             return _syncFactory(arg);
 
         if (_asyncFactoryToken is not null)
-            return _asyncFactoryToken(ct, arg)
+            return _asyncFactoryToken(cancellationToken, arg)
                 .AwaitSync();
 
         if (_asyncFactory is not null)
