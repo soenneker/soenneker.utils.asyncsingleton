@@ -27,20 +27,16 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
     private readonly Func<T1, T>? _syncFactory;
     private readonly Func<CancellationToken, T1, T>? _syncFactoryToken;
 
-    public AsyncSingleton(Func<T1, ValueTask<T>> factory)
-        => _asyncFactory = factory ?? throw new ArgumentNullException(nameof(factory));
+    public AsyncSingleton(Func<T1, ValueTask<T>> factory) => _asyncFactory = factory ?? throw new ArgumentNullException(nameof(factory));
 
-    public AsyncSingleton(Func<CancellationToken, T1, ValueTask<T>> factory)
-        => _asyncFactoryToken = factory ?? throw new ArgumentNullException(nameof(factory));
+    public AsyncSingleton(Func<CancellationToken, T1, ValueTask<T>> factory) =>
+        _asyncFactoryToken = factory ?? throw new ArgumentNullException(nameof(factory));
 
-    public AsyncSingleton(Func<T1, T> factory)
-        => _syncFactory = factory ?? throw new ArgumentNullException(nameof(factory));
+    public AsyncSingleton(Func<T1, T> factory) => _syncFactory = factory ?? throw new ArgumentNullException(nameof(factory));
 
-    public AsyncSingleton(Func<CancellationToken, T1, T> factory)
-        => _syncFactoryToken = factory ?? throw new ArgumentNullException(nameof(factory));
+    public AsyncSingleton(Func<CancellationToken, T1, T> factory) => _syncFactoryToken = factory ?? throw new ArgumentNullException(nameof(factory));
 
-    public ValueTask<T> Get(T1 arg, CancellationToken cancellationToken = default)
-        => GetOrCreate(cancellationToken, arg);
+    public ValueTask<T> Get(T1 arg, CancellationToken cancellationToken = default) => GetOrCreate(cancellationToken, arg);
 
     private ValueTask<T> GetOrCreate(CancellationToken ct, T1 arg)
     {
@@ -51,24 +47,26 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
             return new ValueTask<T>(_instance!);
 
         return Slow(ct, arg);
+    }
 
-        async ValueTask<T> Slow(CancellationToken token, T1 a)
+    private async ValueTask<T> Slow(CancellationToken token, T1 a)
+    {
+        using (await _lock.Lock(token)
+                          .NoSync())
         {
-            using (await _lock.Lock(token).NoSync())
-            {
-                if (_disposed.Value)
-                    throw new ObjectDisposedException(typeof(AsyncSingleton<T, T1>).Name);
+            if (_disposed.Value)
+                throw new ObjectDisposedException(typeof(AsyncSingleton<T, T1>).Name);
 
-                if (_hasValue.Value)
-                    return _instance!;
+            if (_hasValue.Value)
+                return _instance!;
 
-                T created = await Create(token, a).NoSync();
+            T created = await Create(token, a)
+                .NoSync();
 
-                _instance = created!;
-                _hasValue.Value = true;
+            _instance = created!;
+            _hasValue.Value = true;
 
-                return created;
-            }
+            return created;
         }
     }
 
@@ -123,10 +121,12 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
             return _syncFactory(arg);
 
         if (_asyncFactoryToken is not null)
-            return _asyncFactoryToken(ct, arg).AwaitSync();
+            return _asyncFactoryToken(ct, arg)
+                .AwaitSync();
 
         if (_asyncFactory is not null)
-            return _asyncFactory(arg).AwaitSync();
+            return _asyncFactory(arg)
+                .AwaitSync();
 
         throw new InvalidOperationException("No initialization factory was configured.");
     }
@@ -146,7 +146,8 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
         }
 
         if (local is IAsyncDisposable ad)
-            ad.DisposeAsync().AwaitSync();
+            ad.DisposeAsync()
+              .AwaitSync();
         else if (local is IDisposable d)
             d.Dispose();
 
@@ -160,7 +161,8 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
 
         object? local;
 
-        using (await _lock.Lock().NoSync())
+        using (await _lock.Lock()
+                          .NoSync())
         {
             _hasValue.Value = false;
             local = _instance;
@@ -168,7 +170,8 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
         }
 
         if (local is IAsyncDisposable ad)
-            await ad.DisposeAsync().NoSync();
+            await ad.DisposeAsync()
+                    .NoSync();
         else if (local is IDisposable d)
             d.Dispose();
 
