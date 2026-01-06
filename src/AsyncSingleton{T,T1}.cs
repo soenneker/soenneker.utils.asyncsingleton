@@ -150,8 +150,6 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
               .AwaitSync();
         else if (local is IDisposable d)
             d.Dispose();
-
-        GC.SuppressFinalize(this);
     }
 
     public async ValueTask DisposeAsync()
@@ -174,7 +172,5 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
                     .NoSync();
         else if (local is IDisposable d)
             d.Dispose();
-
-        GC.SuppressFinalize(this);
     }
 }
