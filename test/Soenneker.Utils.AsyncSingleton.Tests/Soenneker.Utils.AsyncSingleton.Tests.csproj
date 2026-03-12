@@ -16,7 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\Soenneker.Utils.AsyncSingleton.csproj" />
+        <ProjectReference Include="..\..\src\Soenneker.Utils.AsyncSingleton\Soenneker.Utils.AsyncSingleton.csproj" />
     </ItemGroup>
 
     <ItemGroup>
