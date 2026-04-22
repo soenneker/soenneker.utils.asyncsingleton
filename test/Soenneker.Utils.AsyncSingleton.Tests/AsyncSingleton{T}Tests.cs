@@ -1,15 +1,14 @@
-﻿using System;
+using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using AwesomeAssertions;
-using Xunit;
 
 namespace Soenneker.Utils.AsyncSingleton.Tests;
 
 public class AsyncSingletonTTests
 {
-    [Fact]
+    [Test]
     public async Task Get_should_return_instance()
     {
         var httpClientSingleton = new AsyncSingleton<HttpClient>(() => new HttpClient());
@@ -18,7 +17,7 @@ public class AsyncSingletonTTests
               .NotBeNull();
     }
 
-    [Fact]
+    [Test]
     public async Task Get_async_should_return_instance()
     {
         var httpClientSingleton = new AsyncSingleton<HttpClient>(async () =>
@@ -32,7 +31,7 @@ public class AsyncSingletonTTests
               .NotBeNull();
     }
 
-    [Fact]
+    [Test]
     public async Task Get_in_parallel_should_return_both_instances()
     {
         var httpClientSingleton = new AsyncSingleton<HttpClient>(() => new HttpClient());
@@ -55,7 +54,7 @@ public class AsyncSingletonTTests
                .NotBeNull();
     }
 
-    [Fact]
+    [Test]
     public async Task Get_DisposeAsync_should_throw_after_disposing()
     {
         var httpClientSingleton = new AsyncSingleton<HttpClient>(() => new HttpClient());
@@ -70,7 +69,7 @@ public class AsyncSingletonTTests
                  .ThrowAsync<ObjectDisposedException>();
     }
 
-    [Fact]
+    [Test]
     public async Task GetSync_Dispose_should_throw_after_disposing()
     {
         var httpClientSingleton = new AsyncSingleton<HttpClient>(() => new HttpClient());
@@ -86,7 +85,7 @@ public class AsyncSingletonTTests
            .Throw<ObjectDisposedException>();
     }
 
-    [Fact]
+    [Test]
     public async Task Dispose_with_nondisposable_should_not_throw()
     {
         var httpClientSingleton = new AsyncSingleton<object>(() => new object());
@@ -97,7 +96,7 @@ public class AsyncSingletonTTests
         httpClientSingleton.Dispose();
     }
 
-    [Fact]
+    [Test]
     public async Task DisposeAsync_with_nondisposable_should_not_throw()
     {
         var httpClientSingleton = new AsyncSingleton<object>(() => new object());
@@ -107,7 +106,7 @@ public class AsyncSingletonTTests
         await httpClientSingleton.DisposeAsync();
     }
 
-    [Fact]
+    [Test]
     public async Task DisposeAsync_with_cancellationToken_with_nondisposable_should_not_throw()
     {
         var httpClientSingleton = new AsyncSingleton<object>(() => new object());
@@ -117,7 +116,7 @@ public class AsyncSingletonTTests
         await httpClientSingleton.DisposeAsync();
     }
 
-    [Fact]
+    [Test]
     public async Task Async_with_object_and_cancellationToken_should_not_throw()
     {
         var httpClientSingleton = new AsyncSingleton<object, int>(async (token, _) =>
@@ -129,7 +128,7 @@ public class AsyncSingletonTTests
         _ = await httpClientSingleton.Get(3, CancellationToken.None);
     }
 
-    [Fact]
+    [Test]
     public void Sync_with_object_and_cancellationToken_should_not_throw()
     {
         var httpClientSingleton = new AsyncSingleton<object, int>(_ => new object());
@@ -137,7 +136,7 @@ public class AsyncSingletonTTests
         object httpClient = httpClientSingleton.GetSync(3, CancellationToken.None);
     }
 
-    [Fact]
+    [Test]
     public async Task Async_Get_should_only_initialize_once()
     {
         var x = 0;
@@ -156,7 +155,7 @@ public class AsyncSingletonTTests
          .Be(1);
     }
 
-    [Fact]
+    [Test]
     public async Task Sync_Get_Async_should_only_initialize_once()
     {
         var x = 0;
@@ -174,7 +173,7 @@ public class AsyncSingletonTTests
          .Be(1);
     }
 
-    [Fact]
+    [Test]
     public void Sync_Get_Sync_should_only_initialize_once()
     {
         var x = 0;
