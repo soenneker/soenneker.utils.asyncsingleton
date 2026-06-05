@@ -131,6 +131,9 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
         throw new InvalidOperationException("No initialization factory was configured.");
     }
 
+    /// <summary>
+    /// Releases resources used by the current instance.
+    /// </summary>
     public void Dispose()
     {
         if (!_disposed.CompareAndSet(false, true))
@@ -152,6 +155,10 @@ public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
             d.Dispose();
     }
 
+    /// <summary>
+    /// Asynchronously releases resources used by the current instance.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async ValueTask DisposeAsync()
     {
         if (!_disposed.CompareAndSet(false, true))

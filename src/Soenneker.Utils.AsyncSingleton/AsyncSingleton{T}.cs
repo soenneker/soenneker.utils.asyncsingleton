@@ -10,6 +10,7 @@ namespace Soenneker.Utils.AsyncSingleton;
 
 /// <inheritdoc cref="IAsyncSingleton{T}"/>
 // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
+/// <inheritdoc cref="IAsyncSingleton"/>
 public class AsyncSingleton<T> : IAsyncSingleton<T>
 {
     // Boxed for value types; reference types are stored directly.
@@ -45,6 +46,11 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
     public ValueTask<T> Get(CancellationToken cancellationToken = default) => GetOrCreate(cancellationToken);
 
+    /// <summary>
+    /// Gets or create.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     public virtual ValueTask<T> GetOrCreate(CancellationToken cancellationToken = default)
     {
         if (_disposed.Value)
@@ -145,6 +151,9 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         throw new InvalidOperationException("No initialization factory was configured.");
     }
 
+    /// <summary>
+    /// Releases resources used by the current instance.
+    /// </summary>
     public void Dispose()
     {
         if (!_disposed.CompareAndSet(false, true))
@@ -167,6 +176,10 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
             d.Dispose();
     }
 
+    /// <summary>
+    /// Asynchronously releases resources used by the current instance.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async ValueTask DisposeAsync()
     {
         if (!_disposed.CompareAndSet(false, true))
