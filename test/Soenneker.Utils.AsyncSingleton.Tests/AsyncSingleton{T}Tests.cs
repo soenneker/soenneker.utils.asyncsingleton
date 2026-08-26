@@ -190,4 +190,18 @@ public class AsyncSingletonTTests
         x.Should()
          .Be(1);
     }
+
+    [Test]
+    public async Task Value_type_should_be_cached_without_changing_its_value()
+    {
+        var calls = 0;
+        var singleton = new AsyncSingleton<int>(() => ++calls);
+
+        int first = await singleton.Get();
+        int second = await singleton.Get();
+
+        first.Should().Be(1);
+        second.Should().Be(1);
+        calls.Should().Be(1);
+    }
 }

@@ -13,8 +13,7 @@ namespace Soenneker.Utils.AsyncSingleton;
 /// <inheritdoc cref="IAsyncSingleton"/>
 public class AsyncSingleton<T> : IAsyncSingleton<T>
 {
-    // Boxed for value types; reference types are stored directly.
-    private object? _instance;
+    private T? _instance;
 
     private ValueAtomicBool _hasValue;
     private ValueAtomicBool _disposed;
@@ -58,7 +57,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
 
         // Fast path (no lock)
         if (_hasValue.Value)
-            return new ValueTask<T>((T)_instance!);
+            return new ValueTask<T>(_instance!);
 
         return Slow(cancellationToken);
     }
@@ -72,7 +71,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
                 throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
 
             if (_hasValue.Value)
-                return (T)_instance!;
+                return _instance!;
 
             T created = await Create(cancellationToken)
                 .NoSync();
@@ -90,7 +89,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
             throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
 
         if (_hasValue.Value)
-            return (T)_instance!;
+            return _instance!;
 
         using (_lock.LockSync())
         {
@@ -98,7 +97,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
                 throw new ObjectDisposedException(typeof(AsyncSingleton<T>).Name);
 
             if (_hasValue.Value)
-                return (T)_instance!;
+                return _instance!;
 
             T created = CreateSync(cancellationToken);
 
@@ -159,13 +158,13 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         if (!_disposed.CompareAndSet(false, true))
             return;
 
-        object? local;
+        T? local;
 
         using (_lock.LockSync())
         {
             _hasValue.Value = false;
             local = _instance;
-            _instance = null;
+            _instance = default;
         }
 
         // Prefer async disposal if supported (even in sync Dispose).
@@ -185,14 +184,14 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
         if (!_disposed.CompareAndSet(false, true))
             return;
 
-        object? local;
+        T? local;
 
         using (await _lock.Lock()
                           .NoSync())
         {
             _hasValue.Value = false;
             local = _instance;
-            _instance = null;
+            _instance = default;
         }
 
         if (local is IAsyncDisposable ad)
