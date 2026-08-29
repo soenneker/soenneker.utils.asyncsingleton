@@ -16,11 +16,13 @@ public interface IAsyncSingleton<T, in T1> : IDisposable, IAsyncDisposable
     /// Gets the singleton instance asynchronously, creating it if necessary.
     /// The first call initializes the instance using the provided argument.
     /// </summary>
+    /// <returns>The the singleton instance asynchronously, creating it if necessary. The first call initializes the instance using the provided argument.</returns>
     ValueTask<T> Get(T1 arg, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the singleton instance synchronously, creating it if necessary.
     /// The first call initializes the instance using the provided argument.
     /// </summary>
+    /// <returns>The the singleton instance synchronously, creating it if necessary. The first call initializes the instance using the provided argument.</returns>
     T GetSync(T1 arg, CancellationToken cancellationToken = default);
 }

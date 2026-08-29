@@ -46,10 +46,10 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
     public ValueTask<T> Get(CancellationToken cancellationToken = default) => GetOrCreate(cancellationToken);
 
     /// <summary>
-    /// Gets or create.
+    /// Returns the cached singleton value or runs the asynchronous factory once to create it.
     /// </summary>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task containing the result of the operation.</returns>
+    /// <param name="cancellationToken">Signals that the operation should stop.</param>
+    /// <returns>The existing singleton value or the factory-produced value.</returns>
     public virtual ValueTask<T> GetOrCreate(CancellationToken cancellationToken = default)
     {
         if (_disposed.Value)

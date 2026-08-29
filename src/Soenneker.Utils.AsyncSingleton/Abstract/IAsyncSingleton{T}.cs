@@ -14,10 +14,12 @@ public interface IAsyncSingleton<T> : IDisposable, IAsyncDisposable
     /// <summary>
     /// Gets the singleton instance asynchronously, creating it if necessary.
     /// </summary>
+    /// <returns>The the singleton instance asynchronously, creating it if necessary.</returns>
     ValueTask<T> Get(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the singleton instance synchronously, creating it if necessary.
     /// </summary>
+    /// <returns>The the singleton instance synchronously, creating it if necessary.</returns>
     T GetSync(CancellationToken cancellationToken = default);
 }
