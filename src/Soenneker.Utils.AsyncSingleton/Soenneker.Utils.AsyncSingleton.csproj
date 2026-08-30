@@ -42,7 +42,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Soenneker.Asyncs.Locks" Version="4.0.68" />
+        <PackageReference Include="Soenneker.Asyncs.Locks" Version="4.0.70" />
         <PackageReference Include="Soenneker.Atomics.ValueBools" Version="4.0.36" />
         <PackageReference Include="Soenneker.Extensions.ValueTask" Version="4.0.118" />
     </ItemGroup>
