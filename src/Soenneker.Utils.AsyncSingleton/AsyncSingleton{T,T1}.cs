@@ -12,6 +12,7 @@ namespace Soenneker.Utils.AsyncSingleton;
 /// Async-safe, allocation-free singleton initialized with one argument.
 /// The first successful initialization wins; subsequent calls ignore arguments.
 /// </summary>
+/// <inheritdoc cref="IAsyncSingleton{T, T1}" />
 public sealed class AsyncSingleton<T, T1> : IAsyncSingleton<T, T1>
 {
     private T? _instance;

@@ -10,7 +10,7 @@ namespace Soenneker.Utils.AsyncSingleton;
 
 /// <inheritdoc cref="IAsyncSingleton{T}"/>
 // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
-/// <inheritdoc cref="IAsyncSingleton"/>
+/// <inheritdoc cref="IAsyncSingleton{T}" />
 public class AsyncSingleton<T> : IAsyncSingleton<T>
 {
     private T? _instance;
