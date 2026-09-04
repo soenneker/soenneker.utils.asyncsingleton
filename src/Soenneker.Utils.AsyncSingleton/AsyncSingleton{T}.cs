@@ -173,6 +173,8 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
               .AwaitSync();
         else if (local is IDisposable d)
             d.Dispose();
+
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>
@@ -199,5 +201,7 @@ public class AsyncSingleton<T> : IAsyncSingleton<T>
                     .NoSync();
         else if (local is IDisposable d)
             d.Dispose();
+
+        GC.SuppressFinalize(this);
     }
 }
