@@ -8,7 +8,7 @@ namespace Soenneker.Utils.AsyncSingleton.Tests;
 public class ObjectInitializationTests
 {
     [Test]
-    public async Task Get_should_return_instance(CancellationToken cancellationToken)
+    public async ValueTask Get_should_return_instance(CancellationToken cancellationToken)
     {
         var httpClientSingleton = new AsyncSingleton<HttpClient>(objects =>
         {
