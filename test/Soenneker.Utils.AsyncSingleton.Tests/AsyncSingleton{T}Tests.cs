@@ -22,7 +22,7 @@ public class AsyncSingletonTTests
     {
         var httpClientSingleton = new AsyncSingleton<HttpClient>(async () =>
         {
-            await Task.Delay(500);
+            await Task.Delay(500, cancellationToken: cancellationToken);
             return new HttpClient();
         });
 
@@ -143,7 +143,7 @@ public class AsyncSingletonTTests
 
         var httpClientSingleton = new AsyncSingleton<HttpClient>(async () =>
         {
-            await Task.Delay(100);
+            await Task.Delay(100, cancellationToken: cancellationToken);
             x++;
             return new HttpClient();
         });
