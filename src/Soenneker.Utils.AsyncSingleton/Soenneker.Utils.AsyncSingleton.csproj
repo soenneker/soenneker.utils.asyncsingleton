@@ -45,6 +45,6 @@
     <ItemGroup>
         <PackageReference Include="Soenneker.Asyncs.Locks" Version="11.0.120" />
         <PackageReference Include="Soenneker.Atomics.ValueBools" Version="11.0.55" />
-        <PackageReference Include="Soenneker.Extensions.ValueTask" Version="4.0.133" />
+        <PackageReference Include="Soenneker.Extensions.ValueTask" Version="11.0.134" />
     </ItemGroup>
 </Project>
